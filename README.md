@@ -74,10 +74,30 @@ Compile the smart contract
 yarn compile
 ```
 
-Deploy the smart contract following the `scripts/deploy.ts`. For example, the code below deploys to local Avash network (5 mode Avalanche network). Deploy scripts also has options for Ethereum mainnet and Fuji testnet (Avalanche).
+## Deployment
+Deploy command runs `scripts/deploy.ts`, which picks the contracts to be deployed, and based on the `hardhat.config.js`, it picks which network to deploy.
+
+Deploy to local Hardhat network
+```sh
+yarn deploy
+```
+
+Deploy to Avalanche local network, a 5-node network (using [Avash](https://docs.avax.network/build/tools/avash)) with an EVM chain
 ```sh
 yarn deploy --network local
 ```
+
+Deploy to Avalanche testnet Fuji
+```sh
+yarn deploy --network fuji
+```
+
+Deploy to Avalanche mainnet
+```sh
+yarn deploy --network mainnet
+```
+
+
 
 ## Hardhat Config
 
