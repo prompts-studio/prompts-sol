@@ -1,0 +1,13 @@
+{
+    "name": "PAINTING FOR THE WIND",
+    "description": "Yoko Ono, 1961",
+    "external_url": "https://www.moma.org/collection/works/289486",
+    "image": "https://www.moma.org/media/W1siZiIsIjQ0MjQ0MiJdLFsicCIsImNvbnZlcnQiLCItcXVhbGl0eSA5MCAtcmVzaXplIDIwMDB4MTQ0MFx1MDAzZSJdXQ.jpg?sha=d9e2bd65216a75e7",
+    "content": [
+        "Cut a hole in a bag filled with seeds of any kind and place the bag where there is wind."
+    ],
+    "senderAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "promptAddress": "0x...",
+    "tokenID": "12",
+    "signature": ""
+}

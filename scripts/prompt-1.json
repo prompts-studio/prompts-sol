@@ -1,0 +1,23 @@
+{
+    "name": "Fluxus scores",
+    "description": "",
+    "external_url": "https://...",
+    "image": "https://...",
+    "inputs": [
+        {
+            "type": "string",
+            "name": "a phrase",
+            "min": 1,
+            "max": 120,
+            "required": true,
+            "value": "",
+            "instruction": 1
+        }
+    ],
+    "instructions": [
+        "string_append",
+        "string_append_with_a_space",
+        "string_insert_random",
+        "string_insert_random_with_a_space"
+    ]
+}

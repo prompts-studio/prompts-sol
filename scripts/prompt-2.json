@@ -1,0 +1,29 @@
+{
+    "name": "Exquisite corpse",
+    "description": "",
+    "external_url": "https://...",
+    "image": "https://...",
+    "inputs": [
+        {
+            "type": "image",
+            "name": "an image of a body part",
+            "min_width": 600,
+            "min_height": 600,
+            "max_width": 1200,
+            "max_height": 1200,
+            "required": true,
+            "value": "",
+            "instruction": 7
+        }
+    ],
+    "instructions": [
+        "string_append",
+        "string_append_with_a_space",
+        "string_insert_random",
+        "string_insert_random_with_a_space",
+        "number_add",
+        "number_multiply",
+        "number_multiply_string",
+        "stack_order_asc_by_createdAt"
+    ]
+}

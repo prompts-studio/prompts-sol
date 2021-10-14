@@ -1,56 +1,87 @@
 ## Introduction
 
-Avalanche is an open-source platform for launching decentralized applications and enterprise blockchain deployments in one interoperable, highly scalable ecosystem. Avalanche gives you complete control on both the network and application layers&mdash;helping you build anything you can imagine.
-
-The Avalanche Network is composed of many blockchains. One of these blockchains is the C-Chain (Contract Chain), which is an Ethereum Virtual Machine instance. The C-Chain's API is almost identical to an Ethereum node's API. Avalanche offers the same interface as Ethereum but with higher speed, higher throughput, lower fees and lower transaction confirmation times. These properties considerably improve the performance of DApps and the user experience of smart contracts.
-
-The goal of this guide is to lay out best practices regarding writing, testing and deployment of smart contracts to Avalanche's C-Chain. We'll be building smart contracts with development environment [Hardhat](https://hardhat.org).
+Prompts is a Solidity smart contract extending ERC721 with duration and verified contributions. It enables collective performance NFTs.
 
 ## Prerequisites
 
-### NodeJS and Yarn
+1. Install the long-term support version of [nodejs](https://nodejs.org/en) (`16.10.0` at the time of writing).
 
-First, install the LTS (long-term support) version of [nodejs](https://nodejs.org/en). This is `14.17.0` at the time of writing. NodeJS bundles `npm`.
-
-Next, install [yarn](https://yarnpkg.com):
-
-```zsh
+1. Install [yarn](https://yarnpkg.com):
+```sh
 npm install -g yarn
 ```
 
-### AvalancheGo and Avash
+## How to run
 
-[AvalancheGo](https://github.com/ava-labs/avalanchego) is an Avalanche node implementation written in Go. [Avash](https://docs.avax.network/build/tools/avash) is a tool to quickly deploy local test networks. Together, you can deploy local test networks and run tests on them.
-
-### Solidity and Avalanche
-
-It is also helpful to have a basic understanding of [Solidity](https://docs.soliditylang.org) and [Avalanche](https://docs.avax.network).
-
-## Dependencies
-
-Clone the [quickstart repository](https://github.com/ava-labs/avalanche-smart-contract-quickstart) and install the necessary packages via `yarn`.
-
-```zsh
-$ git clone https://github.com/ava-labs/avalanche-smart-contract-quickstart.git
-$ cd avalanche-smart-contract-quickstart
-$ yarn
+1. Download
+```sh
+git clone git@github.com:arikan/prompts-sol.git
+cd prompts-sol
 ```
 
-## Write Contracts
+2. Build
+```sh
+yarn
+```
 
-Edit the `Coin.sol` contract in `contracts/`. `Coin.sol` is an [Open Zeppelin](https://openzeppelin.com) [ERC20](https://eips.ethereum.org/EIPS/eip-20) contract. ERC20 is a popular smart contract interface. You can also add your own contracts.
+3. Run the tests on the default local network (compiles the cotnract and runs the tests)
+```sh
+yarn test
+
+Prompt contract
+ Deployment
+   ✓ has a name
+   ✓ has a symbol
+   ✓ has an owner
+ Prompt
+   ✓ mints a token
+   ✓ is an empty NFT
+   ✓ has a member
+   ✓ a member can add a new member
+   ✓ has multiple members
+   ✓ a member can contribute
+   ✓ another member can contribute
+   ✓ non-members can contribute
+   ✓ owner can fill NFT / set tokenURI
+   ✓ is a filled NFT
+```
+
+## Explore the code
+
+View `contracts/prompts.sol` for the prompts contract.
+
+View `test/prompts.test.js` for the JS queries to the contract functions.
+
+View `package.json` for the available commands.
+
+View the accounts in the network:
+```sh
+yarn accounts
+```
+
+View the account balances
+```sh
+yarn balances
+```
+
+Hardhat help
+```sh
+yarn hardhat
+```
+
+Compile the smart contract
+```sh
+yarn compile
+```
+
+Deploy the smart contract following the `scripts/deploy.ts`. For example, the code below deploys to local Avash network (5 mode Avalanche network). Deploy scripts also has options for Ethereum mainnet and Fuji testnet (Avalanche).
+```sh
+yarn deploy --network local
+```
 
 ## Hardhat Config
 
 Hardhat uses `hardhat.config.js` as the configuration file. You can define tasks, networks, compilers and more in that file. For more information see [here](https://hardhat.org/config/).
 
-In our repository we use a pre-configured file [hardhat.config.ts](https://github.com/ava-labs/avalanche-smart-contract-quickstart/blob/main/hardhat.config.ts). This file configures necessary network information to provide smooth interaction with Avalanche. There are also some pre-defined private keys for testing on a local test network.
+In our repository we use a pre-configured file `hardhat.config.ts`. This file configures necessary network information to provide smooth interaction with local network as well as Avalanche testnet and mainnet. There are also some pre-defined private keys for testing on a local test network.
 
-## Hardhat Tasks
-
-You can define custom hardhat tasks in [hardhat.config.ts](https://github.com/ava-labs/avalanche-smart-contract-quickstart/blob/main/hardhat.config.ts).
-
-## Documentation
-
-There is a documentation under the Avalanche's official documentation repository:
-[Using Hardhat with the Avalanche C-Chain](https://docs.avax.network/build/tutorials/smart-contracts/using-hardhat-with-the-avalanche-c-chain)

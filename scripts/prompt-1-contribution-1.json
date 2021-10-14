@@ -1,0 +1,13 @@
+{
+    "name": "THEATRE FOR POOR MAN",
+    "description": "Nam June Paik, 1961",
+    "external_url": "https://www.moma.org/collection/works/127501",
+    "image": "https://www.moma.org/media/W1siZiIsIjI5Njk2MCJdLFsicCIsImNvbnZlcnQiLCItcXVhbGl0eSA5MCAtcmVzaXplIDIwMDB4MTQ0MFx1MDAzZSJdXQ.jpg?sha=b95940d624e4916c",
+    "content": [
+        "Summon a Taxi, position yourself inside, request a long ride, OBSERVE THE METER."
+    ],
+    "senderAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "promptAddress": "0x...",
+    "tokenID": "12",
+    "signature": ""
+}

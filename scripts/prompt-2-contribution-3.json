@@ -1,0 +1,13 @@
+{
+    "name": "The foot",
+    "description": "",
+    "external_url": "",
+    "image": "",
+    "content": [
+        "https://"
+    ],
+    "senderAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "promptAddress": "0x...",
+    "tokenID": "12",
+    "signature": ""
+}
