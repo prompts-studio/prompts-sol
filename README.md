@@ -6,8 +6,8 @@ In the current version, a multisig account deploys the Prompts contract and beco
 
 The Prompt server (to be implemented) will do the following:
 - initalize a prompt URI based on the prompt input
-- validate contribution content against the prompt schema return contribution URI
-- compile a final URI based on contributions
+- validate contribution content against the prompt schema and return a contribution URI
+- compile all contributions and return a final URI
 
 <div align="center">
   <img src="Prompts-diagram.png?raw=true">
@@ -67,7 +67,7 @@ yarn console
 ```
 
 ```js
-// Run these commands line by lin
+// Run these commands line by line
 let accounts = await ethers.provider.listAccounts()
 accounts
 ['0x...', '0x...', ]
