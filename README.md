@@ -97,11 +97,15 @@ Deploy to Avalanche mainnet
 yarn deploy --network mainnet
 ```
 
-
-
 ## Hardhat Config
 
 Hardhat uses `hardhat.config.js` as the configuration file. You can define tasks, networks, compilers and more in that file. For more information see [here](https://hardhat.org/config/).
 
 In our repository we use a pre-configured file `hardhat.config.ts`. This file configures necessary network information to provide smooth interaction with local network as well as Avalanche testnet and mainnet. There are also some pre-defined private keys for testing on a local test network.
+
+
+## Efficiency and Security
+
+- We use [Hardhat Gas Reporter plugin](https://hardhat.org/plugins/hardhat-gas-reporter.html), which uses [Eth Gas Reporter](https://hardhat.org/plugins/hardhat-gas-reporter.html)
+- Security analysis tool for EVM bytecode. https://github.com/ConsenSys/mythril
 
