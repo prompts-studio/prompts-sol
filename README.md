@@ -24,7 +24,7 @@ Since anyone can contribute, non-validated contributions can be added to the con
 npm install -g yarn
 ```
 
-## How to run
+## Installation and Running
 
 1. Download
 ```sh
@@ -96,22 +96,22 @@ View `test/prompts.test.js` for the JS queries to the contract functions.
 
 View `package.json` for the available commands.
 
-View the accounts in the network:
+Accounts in the network:
 ```sh
 yarn accounts
 ```
 
-View the account balances
+Account balances:
 ```sh
 yarn balances
 ```
 
-Hardhat help
+Hardhat help:
 ```sh
 yarn hardhat
 ```
 
-Compile the smart contract
+Compile the smart contract:
 ```sh
 yarn compile
 ```
@@ -150,5 +150,5 @@ In our repository we use a pre-configured file `hardhat.config.ts`. This file co
 
 - We use [Hardhat Gas Reporter plugin](https://hardhat.org/plugins/hardhat-gas-reporter.html), which uses [Eth Gas Reporter](https://hardhat.org/plugins/hardhat-gas-reporter.html)
 
-- Security analysis tool for EVM bytecode. https://github.com/ConsenSys/mythril
+- We should use [Mythrill](https://github.com/ConsenSys/mythril) security analysis tool for EVM bytecode
 
