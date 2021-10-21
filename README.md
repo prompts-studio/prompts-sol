@@ -5,9 +5,9 @@ Prompts is a Solidity smart contract extending ERC721 with duration and verified
 In the current version, a multisig account deploys the Prompts contract and becomes the owner. Anyone can mint a Prompt as an empty NFT, anyone can contribute to this prompt, and the multisig owner can fill / finalize the prompt.
 
 The Prompt server (to be implemented) will do the following:
-- initalize a prompt URI based on the prompt input
-- validate contribution content against the prompt schema and return a contribution URI
-- compile all contributions and return a final URI
+- initalize a prompt based on the submitted `promptSchema` and return a `promptURI`
+- validate a `contribution` against the `promptSchema` and return a `contributionURI`
+- compile all `contributions` and return a `finalURI`
 
 <div align="center">
   <img src="Prompts-diagram.png?raw=true">
