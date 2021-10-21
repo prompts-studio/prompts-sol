@@ -2,6 +2,17 @@
 
 Prompts is a Solidity smart contract extending ERC721 with duration and verified contributions. It enables collective performance NFTs.
 
+In the current version, a multisig account deploys the Prompts contract and becomes the owner. Anyone can mint a Prompt as an empty NFT, anyone can contribute to this prompt, and the multisig owner can fill / finalize the prompt.
+
+The Prompt server (to be implemented) will do the following:
+- initalize a prompt URI based on the prompt input
+- validate contribution content against the prompt schema return contribution URI
+- compile a final URI based on contributions
+
+<div align="center">
+  <img src="Prompts-diagram.png?raw=true">
+</div>
+
 ## Prerequisites
 
 1. Install the long-term support version of [nodejs](https://nodejs.org/en) (`16.10.0` at the time of writing).
@@ -41,9 +52,38 @@ Prompt contract
    ✓ has multiple members
    ✓ a member can contribute
    ✓ another member can contribute
-   ✓ non-members can contribute
+   ✓ a non-member can contribute
+   ✓ get all contribution URIs
    ✓ owner can fill NFT / set tokenURI
    ✓ is a filled NFT
+```
+
+## Interact with Smart Contract
+
+[Hardhat has built-in interactive JS console](https://hardhat.org/guides/hardhat-console.html#using-the-hardhat-console) to interact with the smart contract manually.
+
+```sh
+yarn console
+```
+
+```js
+// Run these commands line by lin
+let accounts = await ethers.provider.listAccounts()
+accounts
+['0x...', '0x...', ]
+
+const Prompt = await ethers.getContractFactory('Prompts');
+prompt = await Prompt.deploy('Prompts', 'PNFT')
+await prompt.name()
+await prompt.symbol()
+await prompt.owner()
+await prompt.mint(accounts[0], 'https://prompt...', 100)
+const tokenId = 0
+await prompt.tokenURI(tokenId)
+await prompt.isMember(tokenId, accounts[0])
+await prompt.contribute(tokenId, 'https://contribution...')
+await prompt.getContributions(tokenId)
+await prompt.fill(account[1], tokenId, 'https://finalTokenURI...')
 ```
 
 ## Explore the code
@@ -107,5 +147,6 @@ In our repository we use a pre-configured file `hardhat.config.ts`. This file co
 ## Efficiency and Security
 
 - We use [Hardhat Gas Reporter plugin](https://hardhat.org/plugins/hardhat-gas-reporter.html), which uses [Eth Gas Reporter](https://hardhat.org/plugins/hardhat-gas-reporter.html)
+
 - Security analysis tool for EVM bytecode. https://github.com/ConsenSys/mythril
 

@@ -12,8 +12,13 @@ const tokenId = 0;
 const tokenURI = "https://...";
 const promptURI = "https://...";
 const promptEnd = 10;
-const contributionURI_1 = "https://...";
-const contributionURI_2 = "https://...";
+const contributionId_0 = 0;
+const contributionId_1 = 1;
+const contributionId_2 = 2;
+const contributionURI_0 = "https://zero...";
+const contributionURI_1 = "https://one...";
+const contributionURI_2 = "https://two...";
+const contributionURIs = [contributionURI_0, contributionURI_1, contributionURI_2];
 
 let Prompt;
 let prompt;
@@ -76,28 +81,28 @@ describe('Prompt contract', function () {
         });
 
         it("a member can contribute", async function () {
-            await expect(prompt.contribute(tokenId, contributionURI_1))
+            await expect(prompt.contribute(tokenId, contributionURI_0))
             .to.emit(prompt, "Contributed")
-            .withArgs(tokenId, contributionURI_1, owner.address);
+            .withArgs(tokenId, contributionId_0, contributionURI_0, owner.address);
         });
 
         it("another member can contribute", async function () {
             const promptCallFromOther = await prompt.connect(addr1);
-           await expect(promptCallFromOther.contribute(tokenId, contributionURI_2))
+           await expect(promptCallFromOther.contribute(tokenId, contributionURI_1))
             .to.emit(prompt, "Contributed")
-           .withArgs(tokenId, contributionURI_2, addr1.address);
+           .withArgs(tokenId, contributionId_1, contributionURI_1, addr1.address);
         });
 
-        // it("non-members cannot contribute", async function () {
-       //     await expect(prompt.connect(addr2).contribute(tokenId, contributionURI_2))
-        //     .to.be.reverted;
-        // });
-
-        it("non-members can contribute", async function () {
+        it("a non-member can contribute", async function () {
             const promptCallFromNonmember = await prompt.connect(addr2);
            await expect(promptCallFromNonmember.contribute(tokenId, contributionURI_2))
             .to.emit(prompt, "Contributed")
-           .withArgs(tokenId, contributionURI_2, addr2.address);
+           .withArgs(tokenId, contributionId_2, contributionURI_2, addr2.address);
+        });
+
+        it("get all contribution URIs", async function () {
+            expect(await prompt.getContributions(tokenId))
+            .to.eql(contributionURIs); // deep equality check for arrays
         });
 
         it("owner can fill NFT / set tokenURI", async function () {

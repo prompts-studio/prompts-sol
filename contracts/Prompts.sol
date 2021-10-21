@@ -28,6 +28,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     );
     event Contributed(
         uint256 tokenId,
+        uint256 contributionId,
         string metadata,
         address creator
     );
@@ -55,6 +56,8 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (uint256 => uint256) private promptMemberCount;
     Contribution[] public contributions;
     mapping (uint256 => uint256) public promptContributions;
+    mapping (uint256 => uint256[]) public promptContributionsArr;
+    // mapping (uint256 => uint256) private promptContributionsCount;
 
     constructor(
         string memory tokenName,
@@ -87,11 +90,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         // _setTokenURI(newTokenId, _tokenURI); // empty NFT
 
         prompts.push(Prompt(_promptURI, _end));
-        promptMembers[newTokenId][msg.sender] = true;
+        promptMembers[newTokenId][_to] = true;
         promptMemberCount[newTokenId]++;
         _tokenIds.increment();
 
-        // console.log('newTokenId: %s, _promptURI: %s, _end: %s', newTokenId, _promptURI, _end);
         emit Minted(newTokenId, _to, _promptURI, msg.sender, _end);
     }
 
@@ -107,39 +109,45 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit MemberAdded(_tokenId, _account);
     }
 
-    // membership is not required: onlyMemberOf(_tokenId)
+    // non-validated contributions can be added:
+    // if anyone can call
+    // if onlyMemberOf(_tokenId) can call, but not in members' interest
+    // if onlyOwner() can call, but not in the owner's interest
     function contribute(uint256 _tokenId, string memory _metadata)
         external
         isNotEnded(_tokenId)
     {
-        _contributionIds.increment();
         uint256 contributionId = _contributionIds.current();
         contributions.push(Contribution(_metadata, block.timestamp, msg.sender));
         promptContributions[_tokenId] = contributionId;
+        promptContributionsArr[_tokenId].push(contributionId);
+        _contributionIds.increment();
 
-        emit Contributed(_tokenId, _metadata, msg.sender);
+        emit Contributed(_tokenId, contributionId, _metadata, msg.sender);
     }
 
-    // onlyOwner of deployed contract can finalize
-    // isEnded(_tokenId) removed for testing, no time iteration
+    function getContributions(uint256 _tokenId)
+        external
+        view
+        returns (string[] memory)
+    {
+        string[] memory contributionMetadata = new string[](promptContributionsArr[_tokenId].length);
+
+        for(uint i=0; i < promptContributionsArr[_tokenId].length; i++) {
+            Contribution memory c = contributions[promptContributionsArr[_tokenId][i]];
+            contributionMetadata[i] = c.metadata;
+        }
+        return contributionMetadata;
+    }
+
+    // onlyOwner can call (if contract deployed by multisig, that's a multisig)
+    // generating a _tokenURI from valid contributions is in the owner's interest
+    // isEnded(_tokenId) removed for now because testing has no blocktime increments
     function fill(uint256 _tokenId, string memory _tokenURI)
         external
         onlyOwner()
     {
         _setTokenURI(_tokenId, _tokenURI);
-
-        // TODO: distrubute ownership to contributors
-        // // Check if all multisig addresses are contributors
-        // for(uint i=0; i < multisig.addresses.length; i++) {
-        //         break;
-        //     if(promptContributions[_tokenId][multisig.addresses[i]] == false) {
-        //     }
-        // }
-        // // If check passes, send transfer ownership
-        // // either send the token to the multisig address
-        // transfer(msg.sender, multisig, _tokenId);
-        // // or fractionalize to the multisig addresses
-        // fractionalize(_tokenId, multisig.addresses);
 
         emit Filled(_tokenId, _tokenURI);
     }
@@ -151,6 +159,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     function getContributionContent(uint256 _contributionId) external view returns (string memory) {
         return contributions[_contributionId].metadata;
     }
+
 
     function memberCount(uint256 _tokenId) external view virtual returns (uint256) {
         return promptMemberCount[_tokenId];
