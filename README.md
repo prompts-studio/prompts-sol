@@ -1,15 +1,18 @@
 ## Introduction
 
-Prompts is a Solidity smart contract extending ERC721 with duration and verified contributions. It enables collective performance NFTs.
+Prompts is a Solidity smart contract extending ERC721 with empty NFT initialization, duration, and verified contributors. It enables NFTs for collective performances.
 
-In the current version, a multisig account deploys the Prompts contract and becomes the owner. By calling this contract, anyone can mint a Prompt as an empty NFT, anyone can contribute to this prompt, and only the multisig owner can fill / finalize the prompt.
+In the current version, we assume the following scenario:
+1. Summon contributors, create a multisig for all
+2. Multisig mints an empty NFT, becomes the owner
+3. Multisig adds members
+4. *art happens here* (contributor membership is checked)
+5. The owner multisig updates NFT with final URI
 
 The Prompt server (to be implemented) will do the following:
-- initalize a prompt based on the submitted `promptSchema` and return a `promptURI`
-- validate a `contribution` against the `promptSchema` and return a `contributionURI`
-- compile all `contributions` and return a `finalURI`, which will be the `tokenURI`
-
-Since anyone can contribute, non-validated contributions can be added to the contract. However, only the contract owner can fill to finalize the prompt. So the owner can make sure only valid contributions are added to the final compilation.
+1. Initalize a prompt based on the submitted `promptSchema` and return a `promptURI`
+2. Validate a `contribution` against the `promptSchema` and return a `contributionURI`
+3. Compile all `contributions` and return a `finalURI`, which will be the `tokenURI`
 
 <div align="center">
   <img src="Prompts-diagram.png?raw=true">
@@ -49,12 +52,13 @@ Prompt contract
  Prompt
    ✓ mints a token
    ✓ is an empty NFT
-   ✓ has a member
-   ✓ a member can add a new member
+   ✓ minter is the owner
+   ✓ owner can add a new member
+   ✓ owner can add another member
    ✓ has multiple members
    ✓ a member can contribute
    ✓ another member can contribute
-   ✓ a non-member can contribute
+   ✓ non-members cannot contribute
    ✓ get all contribution URIs
    ✓ owner can fill NFT / set tokenURI
    ✓ is a filled NFT

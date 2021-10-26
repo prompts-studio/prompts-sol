@@ -18,20 +18,21 @@ const contributionId_2 = 2;
 const contributionURI_0 = "https://zero...";
 const contributionURI_1 = "https://one...";
 const contributionURI_2 = "https://two...";
-const contributionURIs = [contributionURI_0, contributionURI_1, contributionURI_2];
+const contributionURIs = [contributionURI_0, contributionURI_1];
 
 let Prompt;
 let prompt;
 let owner;
 let addr1;
 let addr2;
+let addr3;
 let addrs;
 
 describe('Prompt contract', function () {
 
     before(async function () {
         Prompt = await ethers.getContractFactory(name);
-        [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+        [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
 
         prompt = await Prompt.deploy(name, symbol);
         await prompt.deployed();
@@ -66,14 +67,20 @@ describe('Prompt contract', function () {
             expect(await prompt.tokenURI(tokenId)).to.equal('');
         });
 
-        it("has a member", async function () {
-            expect(await prompt.isMember(tokenId, owner.address)).to.be.true;
+        it("minter is the owner", async function () {
+            expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
         });
 
-        it("a member can add a new member", async function () {
+        it("owner can add a new member", async function () {
             await expect(prompt.addMember(tokenId, addr1.address))
                 .to.emit(prompt, "MemberAdded")
                 .withArgs(tokenId, addr1.address);
+        });
+
+        it("owner can add another member", async function () {
+            await expect(prompt.addMember(tokenId, addr2.address))
+                .to.emit(prompt, "MemberAdded")
+                .withArgs(tokenId, addr2.address);
         });
 
         it("has multiple members", async function () {
@@ -81,24 +88,30 @@ describe('Prompt contract', function () {
         });
 
         it("a member can contribute", async function () {
-            await expect(prompt.contribute(tokenId, contributionURI_0))
+            const promptCallFromMember = await prompt.connect(addr1);
+            await expect(promptCallFromMember.contribute(tokenId, contributionURI_0))
             .to.emit(prompt, "Contributed")
-            .withArgs(tokenId, contributionId_0, contributionURI_0, owner.address);
+            .withArgs(tokenId, contributionId_0, contributionURI_0, addr1.address);
         });
 
         it("another member can contribute", async function () {
-            const promptCallFromOther = await prompt.connect(addr1);
-           await expect(promptCallFromOther.contribute(tokenId, contributionURI_1))
-            .to.emit(prompt, "Contributed")
-           .withArgs(tokenId, contributionId_1, contributionURI_1, addr1.address);
+            const promptCallFromOther = await prompt.connect(addr2);
+            await expect(promptCallFromOther.contribute(tokenId, contributionURI_1))
+                .to.emit(prompt, "Contributed")
+                .withArgs(tokenId, contributionId_1, contributionURI_1, addr2.address);
         });
 
-        it("a non-member can contribute", async function () {
-            const promptCallFromNonmember = await prompt.connect(addr2);
-           await expect(promptCallFromNonmember.contribute(tokenId, contributionURI_2))
-            .to.emit(prompt, "Contributed")
-           .withArgs(tokenId, contributionId_2, contributionURI_2, addr2.address);
+        it("non-members cannot contribute", async function () {
+            await expect(prompt.connect(addr3).contribute(tokenId, contributionURI_2))
+            .to.be.reverted;
         });
+
+        // it("a non-member can contribute", async function () {
+        //     const promptCallFromNonmember = await prompt.connect(addr3);
+        //    await expect(promptCallFromNonmember.contribute(tokenId, contributionURI_2))
+        //     .to.emit(prompt, "Contributed")
+        //    .withArgs(tokenId, contributionId_2, contributionURI_2, addr3.address);
+        // });
 
         it("get all contribution URIs", async function () {
             expect(await prompt.getContributions(tokenId))

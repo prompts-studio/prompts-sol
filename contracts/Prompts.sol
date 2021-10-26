@@ -11,31 +11,14 @@ import "hardhat/console.sol";
 /// @title Prompts
 /// @author Burak Arıkan & Sam Hart
 /// @dev compliant with ERC721 OpenZeppelin implementation
-/// @dev extends ERC721 with duration and verified contributions
+/// @dev extends ERC721 with empty minting, duration, and verified contributors
 
 contract Prompts is ERC721URIStorage, Ownable {
 
-    event Minted(
-        uint256 tokenId,
-        address beneficiary,
-        string promptURI,
-        address minter,
-        uint256 end
-    );
-    event MemberAdded(
-        uint256 tokenId,
-        address account
-    );
-    event Contributed(
-        uint256 tokenId,
-        uint256 contributionId,
-        string metadata,
-        address creator
-    );
-    event Filled(
-        uint256 tokenId,
-        string tokenURI
-    );
+    event Minted(uint256 tokenId, address beneficiary, string promptURI, address minter, uint256 end);
+    event MemberAdded(uint256 tokenId, address account);
+    event Contributed(uint256 tokenId, uint256 contributionId, string metadata, address creator);
+    event Filled(uint256 tokenId, string tokenURI);
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -52,12 +35,12 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
 
     Prompt[] public prompts;
+    mapping (uint256 => address) public promptOwner;
     mapping (uint256 => mapping (address => bool)) public promptMembers;
     mapping (uint256 => uint256) private promptMemberCount;
     Contribution[] public contributions;
     mapping (uint256 => uint256) public promptContributions;
     mapping (uint256 => uint256[]) public promptContributionsArr;
-    // mapping (uint256 => uint256) private promptContributionsCount;
 
     constructor(
         string memory tokenName,
@@ -70,6 +53,12 @@ contract Prompts is ERC721URIStorage, Ownable {
     modifier onlyMemberOf(uint _tokenId) {
         if (promptMembers[_tokenId][msg.sender] == false) {
             revert('not a prompt member');
+        }
+        _;
+    }
+    modifier onlyOwnerOf(uint _tokenId) {
+        if (msg.sender != promptOwner[_tokenId]) {
+            revert('not the prompt owner');
         }
         _;
     }
@@ -90,9 +79,13 @@ contract Prompts is ERC721URIStorage, Ownable {
         // _setTokenURI(newTokenId, _tokenURI); // empty NFT
 
         prompts.push(Prompt(_promptURI, _end));
-        promptMembers[newTokenId][_to] = true;
-        promptMemberCount[newTokenId]++;
+        promptOwner[newTokenId] = _to;
+        // promptMembers[newTokenId][_to] = true;
+        // promptMemberCount[newTokenId]++;
         _tokenIds.increment();
+
+        // console.log('_to', _to);
+        // console.log('msg.sender', msg.sender);
 
         emit Minted(newTokenId, _to, _promptURI, msg.sender, _end);
     }
@@ -100,6 +93,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     function addMember(uint256 _tokenId, address _account)
         external
         isNotEnded(_tokenId)
+        onlyOwnerOf(_tokenId)
     {
         require(_account != address(0), 'address cannot be null address');
         require(!promptMembers[_tokenId][_account], 'address is already a member of prompt');
@@ -109,13 +103,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit MemberAdded(_tokenId, _account);
     }
 
-    // non-validated contributions can be added:
-    // if anyone can call
-    // if onlyMemberOf(_tokenId) can call, but not in members' interest
-    // if onlyOwner() can call, but not in the owner's interest
     function contribute(uint256 _tokenId, string memory _metadata)
         external
         isNotEnded(_tokenId)
+        onlyMemberOf(_tokenId)
     {
         uint256 contributionId = _contributionIds.current();
         contributions.push(Contribution(_metadata, block.timestamp, msg.sender));
@@ -140,16 +131,18 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributionMetadata;
     }
 
-    // onlyOwner can call (if contract deployed by multisig, that's a multisig)
-    // generating a _tokenURI from valid contributions is in the owner's interest
-    // isEnded(_tokenId) removed for now because testing has no blocktime increments
+    // isEnded(_tokenId) removed for testing
     function fill(uint256 _tokenId, string memory _tokenURI)
         external
-        onlyOwner()
+        onlyOwnerOf(_tokenId)
     {
         _setTokenURI(_tokenId, _tokenURI);
 
         emit Filled(_tokenId, _tokenURI);
+    }
+
+    function isOwner(uint256 _tokenId, address _account) external view returns (bool) {
+        return promptOwner[_tokenId] == _account;
     }
 
     function isMember(uint256 _tokenId, address _account) external view returns (bool) {
@@ -159,7 +152,6 @@ contract Prompts is ERC721URIStorage, Ownable {
     function getContributionContent(uint256 _contributionId) external view returns (string memory) {
         return contributions[_contributionId].metadata;
     }
-
 
     function memberCount(uint256 _tokenId) external view virtual returns (uint256) {
         return promptMemberCount[_tokenId];
