@@ -44,24 +44,25 @@ yarn
 ```sh
 yarn test
 
-Prompt contract
- Deployment
-   ✓ has a name
-   ✓ has a symbol
-   ✓ has an owner
- Prompt
-   ✓ mints a token
-   ✓ is an empty NFT
-   ✓ minter is the owner
-   ✓ owner can add a new member
-   ✓ owner can add another member
-   ✓ has multiple members
-   ✓ a member can contribute
-   ✓ another member can contribute
-   ✓ non-members cannot contribute
-   ✓ get all contribution URIs
-   ✓ owner can fill NFT / set tokenURI
-   ✓ is a filled NFT
+  Prompt contract
+    Deployment
+      ✓ has a name
+      ✓ has a symbol
+      ✓ has an owner
+    Prompt
+      ✓ mints a token with end time and members
+      ✓ is an empty NFT
+      ✓ minter is the owner
+      ✓ has 3 members (owner + two members)
+      ✓ owner can add a new member
+      ✓ owner can add another member
+      ✓ has total 5 members
+      ✓ a member can contribute
+      ✓ another member can contribute
+      ✓ non-members not allowed to contribute
+      ✓ get all contribution URIs
+      ✓ owner can fill NFT (set tokenURI) and transfer to another address (multisig)
+      ✓ is a filled NFT
 ```
 
 ## Interact with Smart Contract

@@ -15,7 +15,7 @@ import "hardhat/console.sol";
 
 contract Prompts is ERC721URIStorage, Ownable {
 
-    event Minted(uint256 tokenId, address beneficiary, string promptURI, address minter, uint256 end);
+    event Minted(uint256 tokenId, address beneficiary, string promptURI, uint256 end, address minter);
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, uint256 contributionId, string metadata, address creator);
     event Filled(uint256 tokenId, string tokenURI);
@@ -64,7 +64,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
     modifier isNotEnded(uint _tokenId) {
         require(prompts[_tokenId].end <= block.timestamp,
-                'prompt has ended');
+                'prompt has not ended');
         _;
     }
     modifier isEnded(uint _tokenId) {
@@ -73,21 +73,30 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
 
-    function mint(address _to, string memory _promptURI, uint256 _end) external {
+    function mint(address _to, string memory _promptURI, uint256 _end, address[] memory _accounts) external {
         uint256 newTokenId = _tokenIds.current();
         _mint(_to, newTokenId);
         // _setTokenURI(newTokenId, _tokenURI); // empty NFT
 
         prompts.push(Prompt(_promptURI, _end));
         promptOwner[newTokenId] = _to;
-        // promptMembers[newTokenId][_to] = true;
-        // promptMemberCount[newTokenId]++;
+
+        promptMembers[newTokenId][_to] = true;
+        promptMemberCount[newTokenId]++;
+
+        for (uint256 i=0; i < _accounts.length; i++) {
+            require(_accounts[i] != address(0), 'address cannot be null address');
+            require(!promptMembers[newTokenId][_accounts[i]], 'address is already a member of prompt');
+            promptMembers[newTokenId][_accounts[i]] = true;
+            promptMemberCount[newTokenId]++;
+        }
+
         _tokenIds.increment();
 
         // console.log('_to', _to);
         // console.log('msg.sender', msg.sender);
 
-        emit Minted(newTokenId, _to, _promptURI, msg.sender, _end);
+        emit Minted(newTokenId, _to, _promptURI, _end, msg.sender);
     }
 
     function addMember(uint256 _tokenId, address _account)
@@ -132,11 +141,15 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
 
     // isEnded(_tokenId) removed for testing
-    function fill(uint256 _tokenId, string memory _tokenURI)
+    function fill(uint256 _tokenId, string memory _tokenURI, address _to)
         external
         onlyOwnerOf(_tokenId)
     {
         _setTokenURI(_tokenId, _tokenURI);
+
+        if (msg.sender != _to) {
+            transferFrom(msg.sender, _to, _tokenId); // multisig
+        }
 
         emit Filled(_tokenId, _tokenURI);
     }

@@ -26,13 +26,16 @@ let owner;
 let addr1;
 let addr2;
 let addr3;
+let addr4;
+let addr5;
+let addr6;
 let addrs;
 
 describe('Prompt contract', function () {
 
     before(async function () {
         Prompt = await ethers.getContractFactory(name);
-        [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+        [owner, addr1, addr2, addr3, addr4, addr5, addr6,...addrs] = await ethers.getSigners();
 
         prompt = await Prompt.deploy(name, symbol);
         await prompt.deployed();
@@ -57,10 +60,11 @@ describe('Prompt contract', function () {
 
     describe("Prompt", function () {
 
-        it("mints a token", async function () {
-            expect(await prompt.mint(owner.address, promptURI, promptEnd))
+        it("mints a token with end time and members", async function () {
+            let members = [addr1.address, addr2.address];
+            expect(await prompt.mint(owner.address, promptURI, promptEnd, members))
             .to.emit(prompt, "Minted")
-            .withArgs(tokenId, owner.address, promptURI, owner.address, promptEnd);
+            .withArgs(tokenId, owner.address, promptURI, promptEnd, owner.address);
         });
 
         it("is an empty NFT", async function () {
@@ -71,20 +75,24 @@ describe('Prompt contract', function () {
             expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
         });
 
+        it("has 3 members (owner + two members)", async function () {
+            expect(await prompt.memberCount(tokenId)).to.be.equal(3);
+        });
+
         it("owner can add a new member", async function () {
-            await expect(prompt.addMember(tokenId, addr1.address))
+            await expect(prompt.addMember(tokenId, addr3.address))
                 .to.emit(prompt, "MemberAdded")
-                .withArgs(tokenId, addr1.address);
+                .withArgs(tokenId, addr3.address);
         });
 
         it("owner can add another member", async function () {
-            await expect(prompt.addMember(tokenId, addr2.address))
+            await expect(prompt.addMember(tokenId, addr4.address))
                 .to.emit(prompt, "MemberAdded")
-                .withArgs(tokenId, addr2.address);
+                .withArgs(tokenId, addr4.address);
         });
 
-        it("has multiple members", async function () {
-            expect(await prompt.memberCount(tokenId)).to.be.equal(2);
+        it("has total 5 members", async function () {
+            expect(await prompt.memberCount(tokenId)).to.be.equal(5);
         });
 
         it("a member can contribute", async function () {
@@ -101,8 +109,8 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, contributionId_1, contributionURI_1, addr2.address);
         });
 
-        it("non-members cannot contribute", async function () {
-            await expect(prompt.connect(addr3).contribute(tokenId, contributionURI_2))
+        it("non-members not allowed to contribute", async function () {
+            await expect(prompt.connect(addr5).contribute(tokenId, contributionURI_2))
             .to.be.reverted;
         });
 
@@ -118,8 +126,8 @@ describe('Prompt contract', function () {
             .to.eql(contributionURIs); // deep equality check for arrays
         });
 
-        it("owner can fill NFT / set tokenURI", async function () {
-            expect(await prompt.fill(tokenId, tokenURI))
+        it("owner can fill NFT (set tokenURI) and transfer to another address (multisig)", async function () {
+            expect(await prompt.fill(tokenId, tokenURI, addr6.address))
             .to.emit(prompt, "Filled")
             .withArgs(tokenId, tokenURI);
         });

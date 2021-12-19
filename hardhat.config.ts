@@ -19,6 +19,9 @@ const forkingData = FORK_FUJI ? {
   url: 'https://api.avax.network/ext/bc/C/rpc'
 } : undefined
 
+const ALCHEMY_API_KEY = 'M0xX8h6zqK-kKS68cx9RYK1HTfdlmD6r';
+const ROPSTEN_PRIVATE_KEY = '56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027';
+
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
   accounts.forEach((account: SignerWithAddress): void => {
@@ -96,6 +99,10 @@ export default {
       gasPrice: 225000000000,
       chainId: 43114,
       accounts: []
+    },
+    ropsten: {
+      url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      accounts: [`${ROPSTEN_PRIVATE_KEY}`]
     }
   }
 }

@@ -10,9 +10,9 @@ const main = async(): Promise<any> => {
     console.log("Deploying contracts with the account:", owner.address);
     console.log("Account balance:", (await owner.getBalance()).toString());
 
-    const Prompt = await ethers.getContractFactory("Prompt");
+    const Prompt = await ethers.getContractFactory("Prompts");
     const prompt = await Prompt.deploy("Prompt", "PROMPT");
-    console.log("Prompt address:", prompt.address);
+    console.log("Prompt contract address:", prompt.address);
 
     // const Coin: ContractFactory = await ethers.getContractFactory("ExampleERC20")
     // const coin: Contract = await Coin.deploy()
