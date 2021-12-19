@@ -146,9 +146,9 @@ contract Prompts is ERC721URIStorage, Ownable {
     {
         _setTokenURI(_tokenId, _tokenURI);
 
-        console.log('promptOwner[_tokenId]', promptOwner[_tokenId]);
-        console.log('msg.sender', msg.sender);
-        console.log('_to', _to);
+        // console.log('promptOwner[_tokenId]', promptOwner[_tokenId]);
+        // console.log('msg.sender', msg.sender);
+        // console.log('_to', _to);
 
         require(_to != address(0), 'address cannot be null address');
         require(_to != msg.sender, 'address is already the owner');

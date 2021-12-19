@@ -63,6 +63,7 @@ yarn test
       ✓ get all contribution URIs
       ✓ owner can fill NFT (set tokenURI) and transfer to another address (multisig)
       ✓ is a filled NFT
+      ✓ filled address is the new owner
 ```
 
 ## Interact with Smart Contract
