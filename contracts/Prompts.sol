@@ -10,7 +10,6 @@ import "hardhat/console.sol";
 
 /// @title Prompts
 /// @author Burak Arıkan & Sam Hart
-/// @dev compliant with ERC721 OpenZeppelin implementation
 /// @dev extends ERC721 with empty minting, duration, and verified contributors
 
 contract Prompts is ERC721URIStorage, Ownable {
@@ -25,11 +24,11 @@ contract Prompts is ERC721URIStorage, Ownable {
     Counters.Counter private _contributionIds;
 
     struct Prompt {
-        string metadata; // URI of a JSON
-        uint256 end;
+        string metadata; // JSON URI
+        uint256 endsAt;
     }
     struct Contribution {
-        string metadata; // URI of a JSON
+        string metadata; // JSON URI
         uint256 createdAt;
         address creator;
     }
@@ -63,19 +62,19 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier isNotEnded(uint _tokenId) {
-        require(prompts[_tokenId].end <= block.timestamp,
+        require(prompts[_tokenId].endsAt <= block.timestamp,
                 'prompt has not ended');
         _;
     }
     modifier isEnded(uint _tokenId) {
-        require(prompts[_tokenId].end >= block.timestamp,
+        require(prompts[_tokenId].endsAt >= block.timestamp,
                 'prompt has not ended yet');
         _;
     }
 
     function mint(address _to, string memory _promptURI, uint256 _end, address[] memory _accounts) external {
         uint256 newTokenId = _tokenIds.current();
-        _mint(_to, newTokenId);
+        _safeMint(_to, newTokenId);
         // _setTokenURI(newTokenId, _tokenURI); // empty NFT
 
         prompts.push(Prompt(_promptURI, _end));
@@ -147,9 +146,13 @@ contract Prompts is ERC721URIStorage, Ownable {
     {
         _setTokenURI(_tokenId, _tokenURI);
 
-        if (msg.sender != _to) {
-            transferFrom(msg.sender, _to, _tokenId); // multisig
-        }
+        console.log('promptOwner[_tokenId]', promptOwner[_tokenId]);
+        console.log('msg.sender', msg.sender);
+        console.log('_to', _to);
+
+        require(_to != address(0), 'address cannot be null address');
+        require(_to != msg.sender, 'address is already the owner');
+        _safeTransfer(msg.sender, _to, _tokenId, "");
 
         emit Filled(_tokenId, _tokenURI);
     }

@@ -72,7 +72,9 @@ describe('Prompt contract', function () {
         });
 
         it("minter is the owner", async function () {
-            expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
+            let nftowner = await prompt.ownerOf(tokenId);
+            expect(nftowner).to.equal(owner.address);
+            // expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
         });
 
         it("has 3 members (owner + two members)", async function () {
@@ -136,5 +138,9 @@ describe('Prompt contract', function () {
             expect(await prompt.tokenURI(tokenId)).to.equal(tokenURI);
         });
 
+        it("filled address is the new owner", async function () {
+            let nftowner = await prompt.ownerOf(tokenId);
+            expect(nftowner).to.equal(addr6.address);
+        });
     });
 });
