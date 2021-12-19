@@ -1,18 +1,20 @@
 ## Introduction
 
-Prompts is a Solidity smart contract extending ERC721 with empty NFT initialization, duration, and verified contributors. It enables NFTs for collective performances.
+Prompts is a Solidity smart contract extending ERC721 with empty minting, duration, and verified contributors. It enables NFTs for collective performances.
 
-In the current version, we assume the following scenario:
-1. Summon contributors, create a multisig for all
-2. Multisig mints an empty NFT, becomes the owner
-3. Multisig adds members
-4. *art happens here* (contributor membership is checked)
-5. The owner multisig updates NFT with final URI
+Current version assumes the following scenario:
+1. Mint an NFT (using the deployed Prompt) by adding end time and collaborator addresses
+2. NFT is minted empty and minter address is the owner
+3. Invite contributors to add their work before end time (only collaborator addresses can contribute)
+4. When end time is reached, owner finalizes the NFT (that compiles and adds the tokenURI) to their multisig address
 
-The Prompt server (to be implemented) will do the following:
-1. Initalize a prompt based on the submitted `promptSchema` and return a `promptURI`
-2. Validate a `contribution` against the `promptSchema` and return a `contributionURI`
-3. Compile all `contributions` and return a `finalURI`, which will be the `tokenURI`
+The Prompt app will do the following:
+1. Let the user connect wallet
+2. Let the user call enter `name`, `description`, `endtime`, and collaborator `[address]`
+3. When submitted, the app adds `name` and `description` to a JSON file, uploads to IPFS, and gets the content-address and sets as the `promptURI`, then calls the contract `mint(owner, promptURI, end, accounts)` function.
+4. Onwer invites contributors to the app with this NFT address
+5. Contributors connect wallet and submit their contribution, where the app uploads the image IPFS, takes the contributionURI and calls `contribute(tokenId, contributionURI)`
+6. After the end time is reached, owner finalizes the NFT, which puts the uploaded contributions together into a single JSON, uploads to IPFS, and gets the tokenID, and calls with a multisig address `fill(tokenId, tokenURI, to)`.
 
 <div align="center">
   <img src="Prompts-diagram.png?raw=true">
