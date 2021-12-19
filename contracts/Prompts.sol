@@ -34,7 +34,6 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
 
     Prompt[] public prompts;
-    mapping (uint256 => address) public promptOwner;
     mapping (uint256 => mapping (address => bool)) public promptMembers;
     mapping (uint256 => uint256) private promptMemberCount;
     Contribution[] public contributions;
@@ -56,7 +55,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier onlyOwnerOf(uint _tokenId) {
-        if (msg.sender != promptOwner[_tokenId]) {
+        if (msg.sender != ownerOf(_tokenId)) {
             revert('not the prompt owner');
         }
         _;
@@ -78,7 +77,6 @@ contract Prompts is ERC721URIStorage, Ownable {
         // _setTokenURI(newTokenId, _tokenURI); // empty NFT
 
         prompts.push(Prompt(_promptURI, _end));
-        promptOwner[newTokenId] = _to;
 
         promptMembers[newTokenId][_to] = true;
         promptMemberCount[newTokenId]++;
@@ -91,9 +89,6 @@ contract Prompts is ERC721URIStorage, Ownable {
         }
 
         _tokenIds.increment();
-
-        // console.log('_to', _to);
-        // console.log('msg.sender', msg.sender);
 
         emit Minted(newTokenId, _to, _promptURI, _end, msg.sender);
     }
@@ -139,16 +134,12 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributionMetadata;
     }
 
-    // isEnded(_tokenId) removed for testing
+    // isEnded(_tokenId) <- add before deploy
     function fill(uint256 _tokenId, string memory _tokenURI, address _to)
         external
         onlyOwnerOf(_tokenId)
     {
         _setTokenURI(_tokenId, _tokenURI);
-
-        // console.log('promptOwner[_tokenId]', promptOwner[_tokenId]);
-        // console.log('msg.sender', msg.sender);
-        // console.log('_to', _to);
 
         require(_to != address(0), 'address cannot be null address');
         require(_to != msg.sender, 'address is already the owner');
@@ -158,7 +149,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
 
     function isOwner(uint256 _tokenId, address _account) external view returns (bool) {
-        return promptOwner[_tokenId] == _account;
+        return ownerOf(_tokenId) == _account;
     }
 
     function isMember(uint256 _tokenId, address _account) external view returns (bool) {

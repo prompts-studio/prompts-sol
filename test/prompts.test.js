@@ -72,8 +72,8 @@ describe('Prompt contract', function () {
         });
 
         it("minter is the owner", async function () {
-            let nftowner = await prompt.ownerOf(tokenId);
-            expect(nftowner).to.equal(owner.address);
+            let nftOwner = await prompt.ownerOf(tokenId);
+            expect(nftOwner).to.equal(owner.address);
             // expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
         });
 
@@ -116,7 +116,7 @@ describe('Prompt contract', function () {
             .to.be.reverted;
         });
 
-        // it("a non-member can contribute", async function () {
+        // it("non-members can contribute", async function () {
         //     const promptCallFromNonmember = await prompt.connect(addr3);
         //    await expect(promptCallFromNonmember.contribute(tokenId, contributionURI_2))
         //     .to.emit(prompt, "Contributed")
@@ -128,7 +128,7 @@ describe('Prompt contract', function () {
             .to.eql(contributionURIs); // deep equality check for arrays
         });
 
-        it("owner can fill NFT (set tokenURI) and transfer to another address (multisig)", async function () {
+        it("owner can fill NFT (set tokenURI) and transfer to an (multisig) address", async function () {
             expect(await prompt.fill(tokenId, tokenURI, addr6.address))
             .to.emit(prompt, "Filled")
             .withArgs(tokenId, tokenURI);
@@ -139,8 +139,8 @@ describe('Prompt contract', function () {
         });
 
         it("filled address is the new owner", async function () {
-            let nftowner = await prompt.ownerOf(tokenId);
-            expect(nftowner).to.equal(addr6.address);
+            let nftOwner = await prompt.ownerOf(tokenId);
+            expect(nftOwner).to.equal(addr6.address);
         });
     });
 });
