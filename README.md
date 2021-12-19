@@ -123,6 +123,7 @@ yarn compile
 ```
 
 ## Deployment
+
 Deploy command runs `scripts/deploy.ts`, which picks the contracts to be deployed, and based on the `hardhat.config.js`, it picks which network to deploy.
 
 Deploy to local Hardhat network
@@ -144,6 +145,17 @@ Deploy to Avalanche mainnet
 ```sh
 yarn deploy --network mainnet
 ```
+
+Deploy to Avalanche mainnet
+```sh
+yarn deploy --network ropsten
+```
+
+Verify contract on Ethersan
+```sh
+npx hardhat verify --constructor-args arguments.js DEPLOYED_CONTRACT_ADDRESS
+```
+
 
 ## Hardhat Config
 

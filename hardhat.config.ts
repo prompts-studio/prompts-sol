@@ -3,6 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { BigNumber } from "ethers"
 import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-web3"
+import "@nomiclabs/hardhat-etherscan"
 import "hardhat-gas-reporter"
 
 // When using the hardhat network, you may choose to fork Fuji or Avalanche Mainnet
@@ -104,5 +105,8 @@ export default {
       url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [`${ROPSTEN_PRIVATE_KEY}`]
     }
+  },
+  etherscan: {
+    apiKey: "ETHERSCAN_API_KEY"
   }
 }
