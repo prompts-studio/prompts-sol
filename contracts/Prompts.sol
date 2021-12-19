@@ -61,12 +61,12 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier isNotEnded(uint _tokenId) {
-        require(prompts[_tokenId].endsAt <= block.timestamp,
-                'prompt has not ended');
+        require(prompts[_tokenId].endsAt >= block.timestamp,
+                'prompt has ended');
         _;
     }
     modifier isEnded(uint _tokenId) {
-        require(prompts[_tokenId].endsAt >= block.timestamp,
+        require(prompts[_tokenId].endsAt <= block.timestamp,
                 'prompt has not ended yet');
         _;
     }
@@ -134,10 +134,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributionMetadata;
     }
 
-    // isEnded(_tokenId) <- add before deploy
     function fill(uint256 _tokenId, string memory _tokenURI, address _to)
         external
         onlyOwnerOf(_tokenId)
+        isEnded(_tokenId)
     {
         _setTokenURI(_tokenId, _tokenURI);
 

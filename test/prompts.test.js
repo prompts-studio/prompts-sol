@@ -11,7 +11,7 @@ const symbol = 'PNFT';
 const tokenId = 0;
 const tokenURI = "https://...";
 const promptURI = "https://...";
-const promptEnd = 10;
+const promptDuration = 86400; // 1 day
 const contributionId_0 = 0;
 const contributionId_1 = 1;
 const contributionId_2 = 2;
@@ -30,6 +30,22 @@ let addr4;
 let addr5;
 let addr6;
 let addrs;
+
+async function blockTime () {
+    const block = await ethers.provider.getBlock('latest')
+    return block.timestamp
+}
+async function forceMine () {
+    return ethers.provider.send('evm_mine', [])
+}
+async function moveForward (duration) {
+    const blocktime = await blockTime()
+    const goToTime = blocktime + duration
+    await ethers.provider.send('evm_setNextBlockTimestamp', [goToTime])
+    await forceMine()
+    await blockTime()
+    return true
+}
 
 describe('Prompt contract', function () {
 
@@ -62,9 +78,15 @@ describe('Prompt contract', function () {
 
         it("mints a token with end time and members", async function () {
             let members = [addr1.address, addr2.address];
-            expect(await prompt.mint(owner.address, promptURI, promptEnd, members))
+            const blocktime = await blockTime();
+            const endsAt = blocktime + promptDuration;
+
+            // console.log("blocktime", blocktime)
+            // console.log("endsAt", endsAt)
+
+            expect(await prompt.mint(owner.address, promptURI, endsAt, members))
             .to.emit(prompt, "Minted")
-            .withArgs(tokenId, owner.address, promptURI, promptEnd, owner.address);
+            .withArgs(tokenId, owner.address, promptURI, endsAt, owner.address);
         });
 
         it("is an empty NFT", async function () {
@@ -129,6 +151,12 @@ describe('Prompt contract', function () {
         });
 
         it("owner can fill NFT (set tokenURI) and transfer to an (multisig) address", async function () {
+            // let blocktime = await blockTime();
+            // console.log("blocktime", blocktime)
+            await moveForward(promptDuration);
+            // blocktime = await blockTime();
+            // console.log("blocktime", blocktime)
+
             expect(await prompt.fill(tokenId, tokenURI, addr6.address))
             .to.emit(prompt, "Filled")
             .withArgs(tokenId, tokenURI);
