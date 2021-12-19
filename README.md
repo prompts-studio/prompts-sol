@@ -65,6 +65,30 @@ yarn test
       ✓ is a filled NFT
       ✓ filled address is the new owner
 ```
+## Deployment
+
+Runs `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
+
+
+```sh
+# Deploy to local Hardhat network
+yarn deploy
+
+# Deploy to Ropsten
+yarn deploy --network ropsten
+
+# Verify contract on Ethersan
+npx hardhat verify --network ropsten --constructor-args arguments.js DEPLOYED_CONTRACT_ADDRESS
+
+# Deploy to Avalanche local network (via [Avash](https://docs.avax.network/build/tools/avash))
+yarn deploy --network local
+
+# Deploy to Fuji (Avalanche testnet)
+yarn deploy --network fuji
+
+# Deploy to Avalanche mainnet
+yarn deploy --network mainnet
+```
 
 ## Interact with Smart Contract
 
@@ -102,60 +126,19 @@ View `test/prompts.test.js` for the JS queries to the contract functions.
 
 View `package.json` for the available commands.
 
-Accounts in the network:
 ```sh
+# Accounts in the network
 yarn accounts
-```
 
-Account balances:
-```sh
+# Account balances
 yarn balances
-```
 
-Hardhat help:
-```sh
+# Hardhat help
 yarn hardhat
-```
 
-Compile the smart contract:
-```sh
+# Compile the smart contract:
 yarn compile
 ```
-
-## Deployment
-
-Deploy command runs `scripts/deploy.ts`, which picks the contracts to be deployed, and based on the `hardhat.config.js`, it picks which network to deploy.
-
-Deploy to local Hardhat network
-```sh
-yarn deploy
-```
-
-Deploy to Avalanche local network, a 5-node network (using [Avash](https://docs.avax.network/build/tools/avash)) with an EVM chain
-```sh
-yarn deploy --network local
-```
-
-Deploy to Avalanche testnet Fuji
-```sh
-yarn deploy --network fuji
-```
-
-Deploy to Avalanche mainnet
-```sh
-yarn deploy --network mainnet
-```
-
-Deploy to Avalanche mainnet
-```sh
-yarn deploy --network ropsten
-```
-
-Verify contract on Ethersan
-```sh
-npx hardhat verify --constructor-args arguments.js DEPLOYED_CONTRACT_ADDRESS
-```
-
 
 ## Hardhat Config
 

@@ -107,6 +107,6 @@ export default {
     }
   },
   etherscan: {
-    apiKey: "ETHERSCAN_API_KEY"
+    apiKey: "QWKNT3XBEPI5E6NBF7RR371Q6SRP5V6SFN"
   }
 }
