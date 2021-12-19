@@ -16,10 +16,6 @@ The Prompt app will do the following:
 5. Contributors connect wallet and submit their contribution, where the app uploads the image IPFS, takes the contributionURI and calls `contribute(tokenId, contributionURI)`
 6. After the end time is reached, owner finalizes the NFT, which puts the uploaded contributions together into a single JSON, uploads to IPFS, and gets the tokenID, and calls with a multisig address `fill(tokenId, tokenURI, to)`.
 
-<div align="center">
-  <img src="Prompts-diagram.png?raw=true">
-</div>
-
 ## Prerequisites
 
 1. Install the long-term support version of [nodejs](https://nodejs.org/en) (`16.10.0` at the time of writing).
