@@ -2,21 +2,18 @@
 
 Prompts is a Solidity smart contract extending ERC721 with empty minting, duration, and verified contributors. It enables NFTs for collective performances.
 
-Current version assumes the following scenario:
-1. Mint an NFT (using the deployed Prompt) by adding end time and collaborator addresses
-2. NFT is minted empty and minter address is the owner
-3. Invite contributors to add their work before end time (only collaborator addresses can contribute)
-4. When end time is reached, owner finalizes the NFT (that compiles and adds the tokenURI) to their multisig address
+A deployed Prompt contract enables the following:
+1. Mint an NFT by adding `endsAt`, `members`, and the first `contribution`
+2. NFT is minted empty and owned by the provided `to` address
+3. Members can add their contributions before the end time
+4. When the end time ends, owner finalizes the NFT to their multisig address
 
 The Prompt app will do the following:
 1. Let the user connect wallet
-2. Let the user call enter `name`, `description`, `endtime`, and collaborator `[address]`
-3. When submitted, the app adds `name` and `description` to a JSON file, uploads to IPFS, and gets the content-address and sets as the `promptURI`, then calls the contract `mint(owner, promptURI, end, accounts)` function.
-4. Onwer invites contributors to the app with this NFT address
-5. Contributors connect wallet and submit their contribution, where the app uploads the image IPFS, takes the contributionURI and calls `contribute(tokenId, contributionURI)`
-6. After the end time is reached, owner finalizes the NFT, which puts the uploaded contributions together into a single JSON, uploads to IPFS, and gets the tokenID, and calls with a multisig address `fill(tokenId, tokenURI, to)`.
-
-Finalization should compile the latest contributions for each member.
+2. Mint an empty NFT with first contribution and the list of contributors (end time is set default)
+3. The user shares the NFT link with contributors
+4. Contributors connect wallet and submit their contribution. The app uploads the image to IPFS, takes the contributionURI, and calls `contribute(tokenId, contributionURI)`
+5. After the end time reached, owner finalizes the NFT. The app compiles the latest contributions (one account can have multiple) together into a single JSON, uploads to IPFS, and gets the tokenID, and calls with a multisig address `fill(tokenId, tokenURI, to)`.
 
 ## Prerequisites
 
@@ -49,19 +46,20 @@ yarn test
       ✓ has a name
       ✓ has a symbol
       ✓ has an owner
+      ✓ has deployment parameters: memberLimit, supply, mintFee, feeAddress
     Prompt
-      ✓ mints a token with end time and members
+      ✓ mints a token with endsAt, members, and first contribution
       ✓ is an empty NFT
       ✓ minter is the owner
-      ✓ has 3 members (owner + two members)
+      ✓ has initially 3 members
       ✓ owner can add a new member
-      ✓ owner can add another member
-      ✓ has total 5 members
+      ✓ cannot add member if limit is reached
+      ✓ has total 4 members
       ✓ a member can contribute
       ✓ another member can contribute
       ✓ non-members not allowed to contribute
       ✓ get all contribution URIs
-      ✓ owner can fill NFT (set tokenURI) and transfer to another address (multisig)
+      ✓ owner can fill NFT (set tokenURI) and transfer to an address (possibly multisig)
       ✓ is a filled NFT
       ✓ filled address is the new owner
 ```
