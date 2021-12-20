@@ -8,6 +8,10 @@ const { ethers } = require('hardhat');
 
 const name = 'Prompts';
 const symbol = 'PNFT';
+const memberLimit = 3;
+const supply = 1;
+const mintFee = ethers.utils.parseUnits('0.1', 'ether');
+
 const tokenId = 0;
 const tokenURI = "https://...";
 const promptURI = "https://...";
@@ -51,9 +55,10 @@ describe('Prompt contract', function () {
 
     before(async function () {
         Prompt = await ethers.getContractFactory(name);
-        [owner, addr1, addr2, addr3, addr4, addr5, addr6,...addrs] = await ethers.getSigners();
+        [owner, addr1, addr2, addr3, addr4, addr5, addr6, ...addrs] = await ethers.getSigners();
+        const feeAddress = owner.address;
 
-        prompt = await Prompt.deploy(name, symbol);
+        prompt = await Prompt.deploy(name, symbol, memberLimit, supply, mintFee, feeAddress);
         await prompt.deployed();
     });
 
@@ -72,6 +77,13 @@ describe('Prompt contract', function () {
         it("has an owner", async function () {
             expect(await prompt.owner()).to.equal(owner.address);
         });
+
+        it("has deployment parameters: memberLimit, supply, mintFee, feeAddress", async function () {
+            expect(await prompt.memberLimit()).to.equal(memberLimit);
+            expect(await prompt.supply()).to.equal(supply);
+            expect(await prompt.mintFee()).to.equal(mintFee);
+            expect(await prompt.feeAddress()).to.equal(owner.address);
+        });
     });
 
     describe("Prompt", function () {
@@ -87,6 +99,15 @@ describe('Prompt contract', function () {
                 .to.emit(prompt, "Minted")
                 .withArgs(tokenId, owner.address, endsAt, members, contributionId_0, contributionURI_0, owner.address);
         });
+
+        // it("cannot mint if reached token supply limit", async function () {
+        //     let members = [owner.address, addr1.address, addr2.address];
+        //     const blocktime = await blockTime();
+        //     const endsAt = blocktime + promptDuration;
+
+        //     expect(await prompt.mint(owner.address, endsAt, members, contributionURI_0))
+        //         .should.be.rejectedWith('reached token supply limit');
+        // });
 
         it("is an empty NFT", async function () {
             expect(await prompt.tokenURI(tokenId)).to.equal('');
@@ -108,14 +129,13 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, addr3.address);
         });
 
-        it("owner can add another member", async function () {
+        it("cannot add member if limit is reached", async function () {
             await expect(prompt.addMember(tokenId, addr4.address))
-                .to.emit(prompt, "MemberAdded")
-                .withArgs(tokenId, addr4.address);
+                .to.be.reverted;
         });
 
-        it("has total 5 members", async function () {
-            expect(await prompt.memberCount(tokenId)).to.be.equal(5);
+        it("has total 4 members", async function () {
+            expect(await prompt.memberCount(tokenId)).to.be.equal(4);
         });
 
         it("a member can contribute", async function () {
@@ -134,7 +154,7 @@ describe('Prompt contract', function () {
 
         it("non-members not allowed to contribute", async function () {
             await expect(prompt.connect(addr5).contribute(tokenId, contributionURI_2))
-            .to.be.reverted;
+                .to.be.reverted;
         });
 
         // it("non-members can contribute", async function () {
@@ -149,7 +169,7 @@ describe('Prompt contract', function () {
             .to.eql(contributionURIs); // deep equality check for arrays
         });
 
-        it("owner can fill NFT (set tokenURI) and transfer to an (multisig) address", async function () {
+        it("owner can fill NFT (set tokenURI) and transfer to an address (possibly multisig)", async function () {
             // let blocktime = await blockTime();
             // console.log("blocktime", blocktime)
             await moveForward(promptDuration);

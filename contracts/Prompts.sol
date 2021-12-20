@@ -29,11 +29,14 @@ contract Prompts is ERC721URIStorage, Ownable {
         address creator;
     }
 
-    // TODO: supply limit
-    // TODO: payable mint, sent to multisig set in constructor
+    uint256 public memberLimit;
+    uint256 public supply;
+    uint public mintFee;
+    address public feeAddress;
 
     mapping (uint256 => uint256) public promptEndsAt;
-    mapping (uint256 => mapping (address => bool)) public promptMembers;
+    mapping (uint256 => address[]) public promptMembers;
+    mapping (uint256 => mapping (address => bool)) public promptMembership;
     mapping (uint256 => uint256) private promptMemberCount;
 
     Contribution[] public contributions;
@@ -42,30 +45,44 @@ contract Prompts is ERC721URIStorage, Ownable {
 
     constructor(
         string memory tokenName,
-        string memory tokenSymbol
+        string memory tokenSymbol,
+        uint256 _memberLimit,
+        uint256 _supply,
+        uint256 _mintFee,
+        address _feeAddress
     ) ERC721(
         tokenName,
         tokenSymbol
-    ) {}
+    ) {
+        require(_memberLimit >= 2, "_memberLimit cannot be smaller than 2");
+        require(_supply > 0, "_supply cannot be 0");
+        require(_mintFee > 0, "_mintFee cannot be 0");
+        require(_feeAddress != address(0), "feeAddress cannot be null address");
 
-    modifier onlyMemberOf(uint _tokenId) {
-        if (promptMembers[_tokenId][msg.sender] == false) {
+        memberLimit = _memberLimit;
+        supply = _supply;
+        mintFee = _mintFee;
+        feeAddress = _feeAddress;
+    }
+
+    modifier onlyMemberOf(uint256 _tokenId) {
+        if (promptMembership[_tokenId][msg.sender] == false) {
             revert('not a prompt member');
         }
         _;
     }
-    modifier onlyOwnerOf(uint _tokenId) {
+    modifier onlyOwnerOf(uint256 _tokenId) {
         if (msg.sender != ownerOf(_tokenId)) {
             revert('not the prompt owner');
         }
         _;
     }
-    modifier isNotEnded(uint _tokenId) {
+    modifier isNotEnded(uint256 _tokenId) {
         require(promptEndsAt[_tokenId] >= block.timestamp,
                 'prompt has ended');
         _;
     }
-    modifier isEnded(uint _tokenId) {
+    modifier isEnded(uint256 _tokenId) {
         require(promptEndsAt[_tokenId] <= block.timestamp,
                 'prompt has not ended yet');
         _;
@@ -79,16 +96,19 @@ contract Prompts is ERC721URIStorage, Ownable {
         external
         isNotEmpty(_contribution)
     {
+        require(_tokenIds.current() < supply, "reached token supply limit");
         require(_to != address(0), 'address cannot be null address');
+        require(_accounts.length <= memberLimit, "reached member limit");
 
         uint256 newTokenId = _tokenIds.current();
 
         promptEndsAt[newTokenId] = _endsAt;
+        promptMembers[newTokenId] = _accounts;
 
         for (uint256 i=0; i < _accounts.length; i++) {
             require(_accounts[i] != address(0), 'address cannot be null address');
-            require(!promptMembers[newTokenId][_accounts[i]], 'address is already a member of prompt');
-            promptMembers[newTokenId][_accounts[i]] = true;
+            require(!promptMembership[newTokenId][_accounts[i]], 'address is already a member of prompt');
+            promptMembership[newTokenId][_accounts[i]] = true;
             promptMemberCount[newTokenId]++;
         }
 
@@ -111,8 +131,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         onlyOwnerOf(_tokenId)
     {
         require(_account != address(0), 'address cannot be null address');
-        require(!promptMembers[_tokenId][_account], 'address is already a member of prompt');
-        promptMembers[_tokenId][_account] = true;
+        require(!promptMembership[_tokenId][_account], 'address is already a member');
+        require(promptMemberCount[_tokenId] <= memberLimit, "reached member limit");
+
+        promptMembership[_tokenId][_account] = true;
         promptMemberCount[_tokenId]++;
 
         emit MemberAdded(_tokenId, _account);
@@ -147,11 +169,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Filled(_tokenId, _tokenURI);
     }
 
-    function getContributions(uint256 _tokenId)
-        external
-        view
-        returns (string[] memory)
-    {
+    function getContributions(uint256 _tokenId) external view returns (string[] memory) {
         string[] memory contributionMetadata = new string[](promptContributionsArr[_tokenId].length);
 
         for(uint i=0; i < promptContributionsArr[_tokenId].length; i++) {
@@ -161,19 +179,23 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributionMetadata;
     }
 
-    function isOwner(uint256 _tokenId, address _account) external view returns (bool) {
-        return ownerOf(_tokenId) == _account;
-    }
-
-    function isMember(uint256 _tokenId, address _account) external view returns (bool) {
-        return promptMembers[_tokenId][_account];
-    }
-
-    function getContributionContent(uint256 _contributionId) external view returns (string memory) {
+    function getContribution(uint256 _contributionId) external view returns (string memory) {
         return contributions[_contributionId].metadata;
+    }
+
+    function getMembers(uint256 _tokenId) external view virtual returns (address[] memory) {
+        return promptMembers[_tokenId];
     }
 
     function memberCount(uint256 _tokenId) external view virtual returns (uint256) {
         return promptMemberCount[_tokenId];
+    }
+
+    function isMember(uint256 _tokenId, address _account) external view returns (bool) {
+        return promptMembership[_tokenId][_account];
+    }
+
+    function isOwner(uint256 _tokenId, address _account) external view returns (bool) {
+        return ownerOf(_tokenId) == _account;
     }
 }
