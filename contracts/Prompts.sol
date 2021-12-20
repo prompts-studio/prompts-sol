@@ -14,7 +14,7 @@ import "hardhat/console.sol";
 
 contract Prompts is ERC721URIStorage, Ownable {
 
-    event Minted(uint256 tokenId, address beneficiary, string promptURI, uint256 end, address minter);
+    event Minted(uint256 tokenId, address to, uint256 end, address[] members, uint256 contributionId, string _contribution, address minter);
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, uint256 contributionId, string metadata, address creator);
     event Filled(uint256 tokenId, string tokenURI);
@@ -23,19 +23,19 @@ contract Prompts is ERC721URIStorage, Ownable {
     Counters.Counter private _tokenIds;
     Counters.Counter private _contributionIds;
 
-    struct Prompt {
-        string metadata; // JSON URI
-        uint256 endsAt;
-    }
     struct Contribution {
         string metadata; // JSON URI
         uint256 createdAt;
         address creator;
     }
 
-    Prompt[] public prompts;
+    // TODO: supply limit
+    // TODO: payable mint, sent to multisig set in constructor
+
+    mapping (uint256 => uint256) public promptEndsAt;
     mapping (uint256 => mapping (address => bool)) public promptMembers;
     mapping (uint256 => uint256) private promptMemberCount;
+
     Contribution[] public contributions;
     mapping (uint256 => uint256) public promptContributions;
     mapping (uint256 => uint256[]) public promptContributionsArr;
@@ -61,25 +61,29 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier isNotEnded(uint _tokenId) {
-        require(prompts[_tokenId].endsAt >= block.timestamp,
+        require(promptEndsAt[_tokenId] >= block.timestamp,
                 'prompt has ended');
         _;
     }
     modifier isEnded(uint _tokenId) {
-        require(prompts[_tokenId].endsAt <= block.timestamp,
+        require(promptEndsAt[_tokenId] <= block.timestamp,
                 'prompt has not ended yet');
         _;
     }
+    modifier isNotEmpty(string memory _content) {
+        require(bytes(_content).length != 0, 'contribution cannot be empty');
+        _;
+    }
 
-    function mint(address _to, string memory _promptURI, uint256 _end, address[] memory _accounts) external {
+    function mint(address _to, uint256 _endsAt, address[] memory _accounts, string memory _contribution)
+        external
+        isNotEmpty(_contribution)
+    {
+        require(_to != address(0), 'address cannot be null address');
+
         uint256 newTokenId = _tokenIds.current();
-        _safeMint(_to, newTokenId);
-        // _setTokenURI(newTokenId, _tokenURI); // empty NFT
 
-        prompts.push(Prompt(_promptURI, _end));
-
-        promptMembers[newTokenId][_to] = true;
-        promptMemberCount[newTokenId]++;
+        promptEndsAt[newTokenId] = _endsAt;
 
         for (uint256 i=0; i < _accounts.length; i++) {
             require(_accounts[i] != address(0), 'address cannot be null address');
@@ -88,9 +92,17 @@ contract Prompts is ERC721URIStorage, Ownable {
             promptMemberCount[newTokenId]++;
         }
 
+        uint256 contributionId = _contributionIds.current();
+        contributions.push(Contribution(_contribution, block.timestamp, msg.sender));
+        promptContributions[newTokenId] = contributionId;
+        promptContributionsArr[newTokenId].push(contributionId);
+        _contributionIds.increment();
+
+        _safeMint(_to, newTokenId);
+        // _setTokenURI(newTokenId, _tokenURI); // <- empty NFT
         _tokenIds.increment();
 
-        emit Minted(newTokenId, _to, _promptURI, _end, msg.sender);
+        emit Minted(newTokenId, _to, _endsAt, _accounts, contributionId, _contribution, msg.sender);
     }
 
     function addMember(uint256 _tokenId, address _account)
@@ -110,6 +122,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         external
         isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
+        isNotEmpty(_metadata)
     {
         uint256 contributionId = _contributionIds.current();
         contributions.push(Contribution(_metadata, block.timestamp, msg.sender));
@@ -118,20 +131,6 @@ contract Prompts is ERC721URIStorage, Ownable {
         _contributionIds.increment();
 
         emit Contributed(_tokenId, contributionId, _metadata, msg.sender);
-    }
-
-    function getContributions(uint256 _tokenId)
-        external
-        view
-        returns (string[] memory)
-    {
-        string[] memory contributionMetadata = new string[](promptContributionsArr[_tokenId].length);
-
-        for(uint i=0; i < promptContributionsArr[_tokenId].length; i++) {
-            Contribution memory c = contributions[promptContributionsArr[_tokenId][i]];
-            contributionMetadata[i] = c.metadata;
-        }
-        return contributionMetadata;
     }
 
     function fill(uint256 _tokenId, string memory _tokenURI, address _to)
@@ -146,6 +145,20 @@ contract Prompts is ERC721URIStorage, Ownable {
         _safeTransfer(msg.sender, _to, _tokenId, "");
 
         emit Filled(_tokenId, _tokenURI);
+    }
+
+    function getContributions(uint256 _tokenId)
+        external
+        view
+        returns (string[] memory)
+    {
+        string[] memory contributionMetadata = new string[](promptContributionsArr[_tokenId].length);
+
+        for(uint i=0; i < promptContributionsArr[_tokenId].length; i++) {
+            Contribution memory c = contributions[promptContributionsArr[_tokenId][i]];
+            contributionMetadata[i] = c.metadata;
+        }
+        return contributionMetadata;
     }
 
     function isOwner(uint256 _tokenId, address _account) external view returns (bool) {

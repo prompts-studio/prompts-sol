@@ -18,7 +18,7 @@ const contributionId_2 = 2;
 const contributionURI_0 = "https://zero...";
 const contributionURI_1 = "https://one...";
 const contributionURI_2 = "https://two...";
-const contributionURIs = [contributionURI_0, contributionURI_1];
+const contributionURIs = [contributionURI_0, contributionURI_1, contributionURI_2];
 
 let Prompt;
 let prompt;
@@ -76,17 +76,16 @@ describe('Prompt contract', function () {
 
     describe("Prompt", function () {
 
-        it("mints a token with end time and members", async function () {
-            let members = [addr1.address, addr2.address];
+        it("mints a token with endsAt, members, and first contribution", async function () {
+            let members = [owner.address, addr1.address, addr2.address];
             const blocktime = await blockTime();
             const endsAt = blocktime + promptDuration;
-
             // console.log("blocktime", blocktime)
             // console.log("endsAt", endsAt)
 
-            expect(await prompt.mint(owner.address, promptURI, endsAt, members))
-            .to.emit(prompt, "Minted")
-            .withArgs(tokenId, owner.address, promptURI, endsAt, owner.address);
+            expect(await prompt.mint(owner.address, endsAt, members, contributionURI_0))
+                .to.emit(prompt, "Minted")
+                .withArgs(tokenId, owner.address, endsAt, members, contributionId_0, contributionURI_0, owner.address);
         });
 
         it("is an empty NFT", async function () {
@@ -99,7 +98,7 @@ describe('Prompt contract', function () {
             // expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
         });
 
-        it("has 3 members (owner + two members)", async function () {
+        it("has initially 3 members", async function () {
             expect(await prompt.memberCount(tokenId)).to.be.equal(3);
         });
 
@@ -121,16 +120,16 @@ describe('Prompt contract', function () {
 
         it("a member can contribute", async function () {
             const promptCallFromMember = await prompt.connect(addr1);
-            await expect(promptCallFromMember.contribute(tokenId, contributionURI_0))
+            await expect(promptCallFromMember.contribute(tokenId, contributionURI_1))
             .to.emit(prompt, "Contributed")
-            .withArgs(tokenId, contributionId_0, contributionURI_0, addr1.address);
+            .withArgs(tokenId, contributionId_1, contributionURI_1, addr1.address);
         });
 
         it("another member can contribute", async function () {
             const promptCallFromOther = await prompt.connect(addr2);
-            await expect(promptCallFromOther.contribute(tokenId, contributionURI_1))
+            await expect(promptCallFromOther.contribute(tokenId, contributionURI_2))
                 .to.emit(prompt, "Contributed")
-                .withArgs(tokenId, contributionId_1, contributionURI_1, addr2.address);
+                .withArgs(tokenId, contributionId_2, contributionURI_2, addr2.address);
         });
 
         it("non-members not allowed to contribute", async function () {

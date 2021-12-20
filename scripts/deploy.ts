@@ -12,7 +12,7 @@ const main = async(): Promise<any> => {
 
     const Prompt = await ethers.getContractFactory("Prompts");
     const prompt = await Prompt.deploy("Prompt", "PROMPT");
-    console.log("Prompt contract address:", prompt.address);
+    console.log("Deployed contract address:", prompt.address);
 
     // const Coin: ContractFactory = await ethers.getContractFactory("ExampleERC20")
     // const coin: Contract = await Coin.deploy()
