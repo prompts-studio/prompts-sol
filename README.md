@@ -75,8 +75,9 @@ yarn deploy
 # Deploy to Ropsten
 yarn deploy --network ropsten
 
-# Verify contract on Ethersan
+# Verify contract on Etherscan
 npx hardhat verify --network ropsten --constructor-args arguments.js DEPLOYED_CONTRACT_ADDRESS
+
 
 # Deploy to Avalanche local network (via [Avash](https://docs.avax.network/build/tools/avash))
 yarn deploy --network local

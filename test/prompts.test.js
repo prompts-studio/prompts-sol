@@ -10,7 +10,7 @@ const name = 'Prompts';
 const symbol = 'PNFT';
 const memberLimit = 3;
 const supply = 1;
-const mintFee = ethers.utils.parseUnits('0.1', 'ether');
+const mintFee = ethers.utils.parseUnits('0.001', 'ether');
 
 const tokenId = 0;
 const tokenURI = "https://...";

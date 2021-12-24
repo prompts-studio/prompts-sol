@@ -22,6 +22,7 @@ const forkingData = FORK_FUJI ? {
 
 const ALCHEMY_API_KEY = 'M0xX8h6zqK-kKS68cx9RYK1HTfdlmD6r';
 const ROPSTEN_PRIVATE_KEY = '56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027';
+const CONTRACT_ADDRESS = '0xa3Acaa140222047317D19F682C7C920E9540A91E';
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
@@ -38,6 +39,27 @@ task("balances", "Prints the list of AVAX account balances", async (args, hre): 
     );
     console.log(`${account.address} has balance ${balance.toString()}`);
   }
+})
+
+task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<void> => {
+  const name = "Prompts";
+  const symbol = "pNFT";
+  const memberLimit = 3;
+  const supply = 100;
+  const mintFee = hre.ethers.utils.parseUnits("0.001", "ether");
+  const feeAddress = "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC";
+
+  await hre.run("verify:verify", {
+    address: CONTRACT_ADDRESS,
+    constructorArguments: [
+      name,
+      symbol,
+      memberLimit,
+      supply,
+      mintFee,
+      feeAddress
+    ],
+  });
 })
 
 export default {
@@ -108,5 +130,9 @@ export default {
   },
   etherscan: {
     apiKey: "QWKNT3XBEPI5E6NBF7RR371Q6SRP5V6SFN"
+    // {
+    //   ropsten:"QWKNT3XBEPI5E6NBF7RR371Q6SRP5V6SFN",
+    //   avalanche: "QDUQ5UXGEVESDVFVMD5FGFZQPINPF5I5G1",
+    // }
   }
 }
