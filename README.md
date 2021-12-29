@@ -46,7 +46,7 @@ yarn test
       ✓ has a name
       ✓ has a symbol
       ✓ has an owner
-      ✓ has deployment parameters: memberLimit, supply, mintFee, feeAddress
+      ✓ has deployment parameters: memberLimit, totalSupply, mintFee, feeAddress
     Prompt
       ✓ mints a token with endsAt, members, and first contribution
       ✓ is an empty NFT
@@ -58,10 +58,9 @@ yarn test
       ✓ a member can contribute
       ✓ another member can contribute
       ✓ non-members not allowed to contribute
-      ✓ get all contribution URIs
-      ✓ owner can fill NFT (set tokenURI) and transfer to an address (possibly multisig)
-      ✓ is a filled NFT
-      ✓ filled address is the new owner
+      ✓ owner can finalize (set tokenURI) and transfer to an address
+      ✓ is a finalized NFT
+      ✓ finalized address is the new owner
 ```
 ## Deployment
 
@@ -103,13 +102,27 @@ let accounts = await ethers.provider.listAccounts()
 accounts
 ['0x...', '0x...', ]
 
+const name = "Prompts";
+const symbol = "pNFT";
+const memberLimit = 3;
+const supply = 100;
+const mintFee = ethers.utils.parseUnits("0.001", "ether");
+const feeAddress = "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC";
 const Prompt = await ethers.getContractFactory('Prompts');
-prompt = await Prompt.deploy('Prompts', 'PNFT')
+const prompt = await Prompt.deploy(name, symbol, memberLimit, supply, mintFee, feeAddress);
+
 await prompt.name()
 await prompt.symbol()
 await prompt.owner()
-await prompt.mint(accounts[0], 'https://prompt...', 100)
+
+const members = [accounts[0], accounts[1], accounts[2]];
+const contributionURI = "'https://contr..."
+const endsAt = 1501505;
+await prompt.mint(accounts[0], endsAt, members, contributionURI)
+
 const tokenId = 0
+const pEndsAt = await prompt.prompts(tokenId).endsAt
+
 await prompt.tokenURI(tokenId)
 await prompt.isMember(tokenId, accounts[0])
 await prompt.contribute(tokenId, 'https://contribution...')

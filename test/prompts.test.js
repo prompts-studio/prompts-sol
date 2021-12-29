@@ -9,12 +9,12 @@ const { ethers } = require('hardhat');
 const name = 'Prompts';
 const symbol = 'PNFT';
 const memberLimit = 3;
-const supply = 1;
+const totalSupply = 1;
 const mintFee = ethers.utils.parseUnits('0.001', 'ether');
 
 const tokenId = 0;
 const tokenURI = "https://...";
-const promptURI = "https://...";
+// const promptURI = "https://...";
 const promptDuration = 86400; // 1 day
 const contributionId_0 = 0;
 const contributionId_1 = 1;
@@ -58,7 +58,7 @@ describe('Prompt contract', function () {
         [owner, addr1, addr2, addr3, addr4, addr5, addr6, ...addrs] = await ethers.getSigners();
         const feeAddress = owner.address;
 
-        prompt = await Prompt.deploy(name, symbol, memberLimit, supply, mintFee, feeAddress);
+        prompt = await Prompt.deploy(name, symbol, memberLimit, totalSupply, mintFee, feeAddress);
         await prompt.deployed();
     });
 
@@ -78,9 +78,9 @@ describe('Prompt contract', function () {
             expect(await prompt.owner()).to.equal(owner.address);
         });
 
-        it("has deployment parameters: memberLimit, supply, mintFee, feeAddress", async function () {
+        it("has deployment parameters: memberLimit, totalSupply, mintFee, feeAddress", async function () {
             expect(await prompt.memberLimit()).to.equal(memberLimit);
-            expect(await prompt.supply()).to.equal(supply);
+            expect(await prompt.totalSupply()).to.equal(totalSupply);
             expect(await prompt.mintFee()).to.equal(mintFee);
             expect(await prompt.feeAddress()).to.equal(owner.address);
         });
@@ -97,7 +97,7 @@ describe('Prompt contract', function () {
 
             expect(await prompt.mint(owner.address, endsAt, members, contributionURI_0))
                 .to.emit(prompt, "Minted")
-                .withArgs(tokenId, owner.address, endsAt, members, contributionId_0, contributionURI_0, owner.address);
+                .withArgs(tokenId, owner.address, endsAt, members, contributionURI_0, owner.address);
         });
 
         // it("cannot mint if reached token supply limit", async function () {
@@ -116,7 +116,6 @@ describe('Prompt contract', function () {
         it("minter is the owner", async function () {
             let nftOwner = await prompt.ownerOf(tokenId);
             expect(nftOwner).to.equal(owner.address);
-            // expect(await prompt.isOwner(tokenId, owner.address)).to.be.true;
         });
 
         it("has initially 3 members", async function () {
@@ -139,17 +138,17 @@ describe('Prompt contract', function () {
         });
 
         it("a member can contribute", async function () {
-            const promptCallFromMember = await prompt.connect(addr1);
-            await expect(promptCallFromMember.contribute(tokenId, contributionURI_1))
+            const promptMember = await prompt.connect(addr1);
+            await expect(promptMember.contribute(tokenId, contributionURI_1))
             .to.emit(prompt, "Contributed")
-            .withArgs(tokenId, contributionId_1, contributionURI_1, addr1.address);
+            .withArgs(tokenId, contributionURI_1, addr1.address);
         });
 
         it("another member can contribute", async function () {
-            const promptCallFromOther = await prompt.connect(addr2);
-            await expect(promptCallFromOther.contribute(tokenId, contributionURI_2))
+            const promptMember2 = await prompt.connect(addr2);
+            await expect(promptMember2.contribute(tokenId, contributionURI_2))
                 .to.emit(prompt, "Contributed")
-                .withArgs(tokenId, contributionId_2, contributionURI_2, addr2.address);
+                .withArgs(tokenId, contributionURI_2, addr2.address);
         });
 
         it("non-members not allowed to contribute", async function () {
@@ -164,28 +163,34 @@ describe('Prompt contract', function () {
         //    .withArgs(tokenId, contributionId_2, contributionURI_2, addr3.address);
         // });
 
-        it("get all contribution URIs", async function () {
-            expect(await prompt.getContributions(tokenId))
-            .to.eql(contributionURIs); // deep equality check for arrays
+        // it("get all contribution URIs", async function () {
+        //     expect(await prompt.contributions(tokenId))
+        //     .to.eql(contributionURIs); // deep equality check for arrays
+        // });
+
+        it("get prompt members", async function () {
+            let members = [owner.address, addr1.address, addr2.address];
+            expect(await prompt.prompts[tokenId].members())
+            .to.eql(members); // deep equality check for arrays
         });
 
-        it("owner can fill NFT (set tokenURI) and transfer to an address (possibly multisig)", async function () {
+        it("owner can finalize (set tokenURI) and transfer to an address", async function () {
             // let blocktime = await blockTime();
             // console.log("blocktime", blocktime)
             await moveForward(promptDuration);
             // blocktime = await blockTime();
             // console.log("blocktime", blocktime)
 
-            expect(await prompt.fill(tokenId, tokenURI, addr6.address))
-            .to.emit(prompt, "Filled")
-            .withArgs(tokenId, tokenURI);
+            expect(await prompt.finalize(tokenId, tokenURI, addr6.address))
+            .to.emit(prompt, "Finalized")
+            .withArgs(tokenId, tokenURI, addr6.address);
         });
 
-        it("is a filled NFT", async function () {
+        it("is a finalized NFT", async function () {
             expect(await prompt.tokenURI(tokenId)).to.equal(tokenURI);
         });
 
-        it("filled address is the new owner", async function () {
+        it("finalized address is the new owner", async function () {
             let nftOwner = await prompt.ownerOf(tokenId);
             expect(nftOwner).to.equal(addr6.address);
         });
