@@ -22,7 +22,8 @@ const forkingData = FORK_FUJI ? {
 
 const ALCHEMY_API_KEY = 'M0xX8h6zqK-kKS68cx9RYK1HTfdlmD6r';
 const ROPSTEN_PRIVATE_KEY = '56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027';
-const CONTRACT_ADDRESS = '0xa3Acaa140222047317D19F682C7C920E9540A91E';
+
+const CONTRACT_ADDRESS = '0xb99441da4a918604d4ee7d1cb20b362bd3c12705';
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
@@ -79,12 +80,12 @@ export default {
       },
       {
         version: "0.8.0",
-        // settings: {
-        //   optimizer: {
-        //     enabled: true,
-        //     runs: 200,
-        //   }
-        // }
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          }
+        }
       }
     ]
   },

@@ -168,11 +168,11 @@ describe('Prompt contract', function () {
         //     .to.eql(contributionURIs); // deep equality check for arrays
         // });
 
-        it("get prompt members", async function () {
-            let members = [owner.address, addr1.address, addr2.address];
-            expect(await prompt.prompts[tokenId].members())
-            .to.eql(members); // deep equality check for arrays
-        });
+        // it("get prompt members", async function () {
+        //     let members = [owner.address, addr1.address, addr2.address];
+        //     expect(await prompt.prompts[tokenId].members())
+        //     .to.eql(members); // deep equality check for arrays
+        // });
 
         it("owner can finalize (set tokenURI) and transfer to an address", async function () {
             // let blocktime = await blockTime();

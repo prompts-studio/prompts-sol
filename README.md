@@ -74,8 +74,11 @@ yarn deploy
 # Deploy to Ropsten
 yarn deploy --network ropsten
 
+# Copy paste the contract address into hardhat.config.ts
+const CONTRACT_ADDRESS = '0xb99441da4a918604d4ee7d1cb20b362bd3c12705';
+
 # Verify contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.js DEPLOYED_CONTRACT_ADDRESS
+npx hardhat verify --network ropsten --constructor-args arguments.js 0xb99441da4a918604d4ee7d1cb20b362bd3c12705
 
 
 # Deploy to Avalanche local network (via [Avash](https://docs.avax.network/build/tools/avash))
