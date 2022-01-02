@@ -100,6 +100,10 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, owner.address, endsAt, members, contributionURI_0, owner.address);
         });
 
+        it("has minted token count", async function () {
+            expect(await prompt.tokenCount()).to.equal(1);
+        });
+
         // it("cannot mint if reached token supply limit", async function () {
         //     let members = [owner.address, addr1.address, addr2.address];
         //     const blocktime = await blockTime();
@@ -163,18 +167,18 @@ describe('Prompt contract', function () {
         //    .withArgs(tokenId, contributionId_2, contributionURI_2, addr3.address);
         // });
 
-        // it("get all contribution URIs", async function () {
-        //     expect(await prompt.contributions(tokenId))
-        //     .to.eql(contributionURIs); // deep equality check for arrays
-        // });
+        it("get prompt", async function () {
+            const myPrompt = await prompt.getPrompt(tokenId);
+            console.log(myPrompt);
 
-        // it("get prompt members", async function () {
-        //     let members = [owner.address, addr1.address, addr2.address];
-        //     expect(await prompt.prompts[tokenId].members())
-        //     .to.eql(members); // deep equality check for arrays
-        // });
+            let members = [owner.address, addr1.address, addr2.address, addr3.address];
+            expect(myPrompt[0]).to.eql(owner.address);
+            expect(myPrompt[1]).to.gt(await blockTime());
+            expect(myPrompt[2]).to.eql(members); // deep equality check for arrays
+            // myPrompt[3] // contributions array
+        });
 
-        it("owner can finalize (set tokenURI) and transfer to an address", async function () {
+        it("owner can finalize (set tokenURI and transfer)", async function () {
             // let blocktime = await blockTime();
             // console.log("blocktime", blocktime)
             await moveForward(promptDuration);

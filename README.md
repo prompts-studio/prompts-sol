@@ -67,21 +67,24 @@ yarn test
 Runs `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
 
 
+Deploy to local Hardhat network
 ```sh
-# Deploy to local Hardhat network
 yarn deploy
+```
 
-# Deploy to Ropsten
+Deploy to Ropsten
+```sh
 yarn deploy --network ropsten
 
-# Copy paste the contract address into hardhat.config.ts
+# Add the deployed contract address in hardhat.config.ts
 const CONTRACT_ADDRESS = '0xb99441da4a918604d4ee7d1cb20b362bd3c12705';
 
-# Verify contract on Etherscan
+# Verify the contract on Etherscan
 npx hardhat verify --network ropsten --constructor-args arguments.js 0xb99441da4a918604d4ee7d1cb20b362bd3c12705
+```
 
-
-# Deploy to Avalanche local network (via [Avash](https://docs.avax.network/build/tools/avash))
+Deploy to Avalanche local network (via [Avash](https://docs.avax.network/build/tools/avash))
+```sh
 yarn deploy --network local
 
 # Deploy to Fuji (Avalanche testnet)
