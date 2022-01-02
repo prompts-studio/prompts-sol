@@ -20,10 +20,18 @@ const forkingData = FORK_FUJI ? {
   url: 'https://api.avax.network/ext/bc/C/rpc'
 } : undefined
 
+// Go to https://www.alchemyapi.io, sign up, create
+// a new App in its dashboard, and replace "KEY" with its key
 const ALCHEMY_API_KEY = 'M0xX8h6zqK-kKS68cx9RYK1HTfdlmD6r';
+
+// Replace this private key with your Ropsten account private key
+// To export your private key from Metamask, open Metamask and
+// go to Account Details > Export Private Key
+// Be aware of NEVER putting real Ether into testing accounts
 const ROPSTEN_PRIVATE_KEY = '56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027';
 
-const CONTRACT_ADDRESS = '0xb99441da4a918604d4ee7d1cb20b362bd3c12705';
+// Deployed contract address
+const CONTRACT_ADDRESS = '0x1678B18a370C65004c8e4e03b6bf4bE76EaDf4F1';
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()

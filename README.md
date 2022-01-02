@@ -8,10 +8,10 @@ A deployed Prompt contract enables the following:
 3. Members can add their contributions before the end time
 4. When the end time ends, owner finalizes the NFT to their multisig address
 
-The Prompt app will do the following:
-1. Let the user connect wallet
-2. Mint an empty NFT with first contribution and the list of contributors (end time is set default)
-3. The user shares the NFT link with contributors
+[The Prompt app](https://github.com/arikan/prompts-app):
+1. Users connects their wallet
+2. Mint an empty NFT with the first contribution and the list of contributors (end time is set 24hrs from current blocktime by default)
+3. Users share the NFT link with contributors
 4. Contributors connect wallet and submit their contribution. The app uploads the image to IPFS, takes the contributionURI, and calls `contribute(tokenId, contributionURI)`
 5. After the end time reached, owner finalizes the NFT. The app compiles the latest contributions (one account can have multiple) together into a single JSON, uploads to IPFS, and gets the tokenID, and calls with a multisig address `fill(tokenId, tokenURI, to)`.
 
@@ -37,7 +37,7 @@ cd prompts-sol
 yarn
 ```
 
-3. Run the tests on the default local network (compiles the cotnract and runs the tests)
+3. Test (compiles and runs on local Hardhat network)
 ```sh
 yarn test
 
@@ -49,6 +49,7 @@ yarn test
       ✓ has deployment parameters: memberLimit, totalSupply, mintFee, feeAddress
     Prompt
       ✓ mints a token with endsAt, members, and first contribution
+      ✓ has minted token count
       ✓ is an empty NFT
       ✓ minter is the owner
       ✓ has initially 3 members
@@ -58,14 +59,58 @@ yarn test
       ✓ a member can contribute
       ✓ another member can contribute
       ✓ non-members not allowed to contribute
-      ✓ owner can finalize (set tokenURI) and transfer to an address
+      ✓ get prompt
+      ✓ owner can finalize (set tokenURI and transfer)
       ✓ is a finalized NFT
       ✓ finalized address is the new owner
+```
+
+Note that `getPrompt(tokenId)` returns full prompt data:
+- `address` owner
+- `blocknumber` endsAt
+- `address[]` members
+- `Contribution[]` contributions
+```js
+[
+  '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  BigNumber { _hex: '0x61d33212', _isBigNumber: true },
+  [
+    '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+    '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
+  ],
+  [
+    [
+      'https://zero...',
+      [BigNumber],
+      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      contributionURI: 'https://zero...',
+      createdAt: [BigNumber],
+      creator: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+    ],
+    [
+      'https://one...',
+      [BigNumber],
+      '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      contributionURI: 'https://one...',
+      createdAt: [BigNumber],
+      creator: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+    ],
+    [
+      'https://two...',
+      [BigNumber],
+      '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+      contributionURI: 'https://two...',
+      createdAt: [BigNumber],
+      creator: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
+    ]
+  ]
+]
 ```
 ## Deployment
 
 Runs `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
-
 
 Deploy to local Hardhat network
 ```sh
@@ -75,16 +120,11 @@ yarn deploy
 Deploy to Ropsten
 ```sh
 yarn deploy --network ropsten
-
-# Add the deployed contract address in hardhat.config.ts
-const CONTRACT_ADDRESS = '0xb99441da4a918604d4ee7d1cb20b362bd3c12705';
-
-# Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.js 0xb99441da4a918604d4ee7d1cb20b362bd3c12705
 ```
 
-Deploy to Avalanche local network (via [Avash](https://docs.avax.network/build/tools/avash))
+Deploy to Avalanche
 ```sh
+# Deploy to local network (run Avash https://docs.avax.network/build/tools/avash)
 yarn deploy --network local
 
 # Deploy to Fuji (Avalanche testnet)
@@ -92,6 +132,15 @@ yarn deploy --network fuji
 
 # Deploy to Avalanche mainnet
 yarn deploy --network mainnet
+```
+
+Verify contract on Etherscan
+```sh
+# Add the deployed contract address in hardhat.config.ts
+const CONTRACT_ADDRESS = '0x1678B18a370C65004c8e4e03b6bf4bE76EaDf4F1';
+
+# Verify the contract on Etherscan
+npx hardhat verify --network ropsten --constructor-args arguments.js 0x1678B18a370C65004c8e4e03b6bf4bE76EaDf4F1
 ```
 
 ## Interact with Smart Contract
