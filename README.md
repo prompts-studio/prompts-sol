@@ -3,10 +3,13 @@
 Prompts is a Solidity smart contract extending ERC721 with empty minting, duration, and verified contributors. It enables NFTs for collective performances.
 
 A deployed Prompt contract enables the following:
-1. Mint an NFT by adding `endsAt`, `members`, and the first `contribution`
-2. NFT is minted empty and owned by the provided `to` address
-3. Members can add their contributions before the end time
-4. When the end time ends, owner finalizes the NFT to their multisig address
+1. Mint an NFT by adding `endsAt`, `members`, and the first `contribution`mint)
+2. All members are added to the `allowlist`, only allowed addresses can mint
+3. NFT is minted empty and owned by the provided `to` address
+4. Members can add their contributions before the end time
+5. When the end time ends, any member can finalize the NFT
+
+Note that the contract deployer address is the first account in allowlist. So it should make the first mint and add others.
 
 [The Prompt app](https://github.com/arikan/prompts-app):
 1. Users connects their wallet
@@ -40,15 +43,19 @@ yarn
 3. Test (compiles and runs on local Hardhat network)
 ```sh
 yarn test
-  Prompt contract
+Prompt contract
     Deployment
       ✓ has a name
       ✓ has a symbol
       ✓ has an owner
       ✓ has deployment parameters: memberLimit, totalSupply, mintFee, feeAddress
     Prompt
+      ✓ deployer address in the allowlist
       ✓ mints a token with endsAt, members, and first contribution
-      ✓ has minted token count
+      ✓ cannot mint if not in allowlist
+      ✓ can mint if in allowlist
+      ✓ cannot mint if reached token supply limit
+      ✓ has token count
       ✓ is an empty NFT
       ✓ minter is the owner
       ✓ has initially 3 members
@@ -56,6 +63,7 @@ yarn test
       ✓ cannot add member if limit is reached
       ✓ has total 4 members
       ✓ a member can contribute
+      ✓ cannot finalize if not ended and not completed
       ✓ a member cannot contribute more than once
       ✓ another member can contribute
       ✓ last member can contribute
