@@ -40,7 +40,6 @@ yarn
 3. Test (compiles and runs on local Hardhat network)
 ```sh
 yarn test
-
   Prompt contract
     Deployment
       ✓ has a name
@@ -57,12 +56,14 @@ yarn test
       ✓ cannot add member if limit is reached
       ✓ has total 4 members
       ✓ a member can contribute
+      ✓ a member cannot contribute more than once
       ✓ another member can contribute
-      ✓ non-members not allowed to contribute
+      ✓ last member can contribute
+      ✓ non-members are not allowed to contribute
+      ✓ is prompt completed?
       ✓ get prompt
-      ✓ owner can finalize (set tokenURI and transfer)
+      ✓ any member can finalize
       ✓ is a finalized NFT
-      ✓ finalized address is the new owner
 ```
 
 Note that `getPrompt(tokenId)` returns full prompt data:
@@ -73,7 +74,8 @@ Note that `getPrompt(tokenId)` returns full prompt data:
 ```js
 [
   '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-  BigNumber { _hex: '0x61d33212', _isBigNumber: true },
+  BigNumber { _hex: '0x61eb1cd3', _isBigNumber: true },
+  '',
   [
     '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
@@ -104,6 +106,14 @@ Note that `getPrompt(tokenId)` returns full prompt data:
       contributionURI: 'https://two...',
       createdAt: [BigNumber],
       creator: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
+    ],
+    [
+      'https://two...',
+      [BigNumber],
+      '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+      contributionURI: 'https://two...',
+      createdAt: [BigNumber],
+      creator: '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
     ]
   ]
 ]

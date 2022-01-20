@@ -31,8 +31,10 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
     mapping (uint256 => address[]) public members; // endsAt[tokenId]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
-    mapping (uint256 => uint256) public memberCount;
+    mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
     mapping (uint256 => Contribution[]) public contributions; // contributions[tokenId]
+    mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
+    mapping (uint256 => mapping (address => bool)) public contributed; // contributed[tokenId][address]
 
     uint256 public memberLimit;
     uint256 public totalSupply;
@@ -87,6 +89,16 @@ contract Prompts is ERC721URIStorage, Ownable {
         require(bytes(_content).length != 0, 'contribution cannot be empty');
         _;
     }
+    modifier finalizable(uint _tokenId) {
+        require(contributionCount[_tokenId] == memberLimit || endsAt[_tokenId] <= block.timestamp,
+            'not all members contributed or prompt has not ended yet');
+        _;
+    }
+    modifier isNotContributed(uint256 _tokenId) {
+        require (contributed[_tokenId][msg.sender] == false,
+            'member already contributed');
+        _;
+    }
 
     function mint(address _to, uint256 _endsAt, address[] memory _members, string memory _contributionURI)
         external
@@ -109,9 +121,12 @@ contract Prompts is ERC721URIStorage, Ownable {
         endsAt[newTokenId] = _endsAt;
 
         contributions[newTokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
+        contributed[newTokenId][msg.sender] = true;
+        contributionCount[newTokenId]++;
 
         // TODO: payable mint (transfer mintFee from sender to feeAddress)
-
+        // TODO: map allowlist for minters
+        // TODO: name in members ? or in contributions? resolve to ens in client?
         _safeMint(_to, newTokenId);
         // _setTokenURI(newTokenId, _tokenURI); // <- empty NFT
 
@@ -127,7 +142,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     {
         require(_account != address(0), 'address cannot be null address');
         require(!membership[_tokenId][_account], 'address is already a member');
-        require(memberCount[_tokenId] <= memberLimit, "reached member limit");
+        require(memberCount[_tokenId] < memberLimit, "reached member limit");
 
         membership[_tokenId][_account] = true;
         memberCount[_tokenId]++;
@@ -141,24 +156,23 @@ contract Prompts is ERC721URIStorage, Ownable {
         isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
         isNotEmpty(_contributionURI)
+        isNotContributed(_tokenId)
     {
         contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
+        contributed[_tokenId][msg.sender] = true;
+        contributionCount[_tokenId]++;
 
         emit Contributed(_tokenId, _contributionURI, msg.sender);
     }
 
-    function finalize(uint256 _tokenId, string memory _tokenURI, address _to)
+    function finalize(uint256 _tokenId, string memory _tokenURI)
         external
-        onlyOwnerOf(_tokenId)
-        isEnded(_tokenId)
+        onlyMemberOf(_tokenId)
+        finalizable(_tokenId)
     {
-        require(_to != address(0), 'address cannot be null address');
-        require(_to != msg.sender, 'address is already the owner');
-
         _setTokenURI(_tokenId, _tokenURI);
-        _safeTransfer(msg.sender, _to, _tokenId, "");
 
-        emit Finalized(_tokenId, _tokenURI, _to);
+        emit Finalized(_tokenId, _tokenURI, ownerOf(_tokenId));
     }
 
     function tokenCount() external view virtual returns (uint256) {
@@ -169,10 +183,15 @@ contract Prompts is ERC721URIStorage, Ownable {
         return membership[_tokenId][_account];
     }
 
+    function isCompleted(uint256 _tokenId) external view virtual returns (bool) {
+        return contributionCount[_tokenId] == memberLimit;
+    }
+
     function getPrompt(uint256 _tokenId) external view virtual
         returns (
             address,
             uint256,
+            string memory,
             address[] memory,
             Contribution[] memory
         )
@@ -180,6 +199,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         return(
             ownerOf(_tokenId),
             endsAt[_tokenId],
+            tokenURI(_tokenId),
             members[_tokenId],
             contributions[_tokenId]
         );
