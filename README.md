@@ -68,7 +68,7 @@ yarn test
 
 Note that `getPrompt(tokenId)` returns full prompt data:
 - `address` owner
-- `blocknumber` endsAt
+- `blocktime` endsAt
 - `address[]` members
 - `Contribution[]` contributions
 ```js

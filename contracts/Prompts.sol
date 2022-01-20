@@ -124,9 +124,9 @@ contract Prompts is ERC721URIStorage, Ownable {
         contributed[newTokenId][msg.sender] = true;
         contributionCount[newTokenId]++;
 
-        // TODO: payable mint (transfer mintFee from sender to feeAddress)
         // TODO: map allowlist for minters
-        // TODO: name in members ? or in contributions? resolve to ens in client?
+        // TODO: payable mint (transfer mintFee from sender to feeAddress)
+        // TODO: name in members?
         _safeMint(_to, newTokenId);
         // _setTokenURI(newTokenId, _tokenURI); // <- empty NFT
 
@@ -175,18 +175,26 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Finalized(_tokenId, _tokenURI, ownerOf(_tokenId));
     }
 
+    /// @notice Get current count of minted tokens
+    /// @return Returns number
     function tokenCount() external view virtual returns (uint256) {
         return _tokenIds.current();
     }
 
+    /// @notice Check if an address is member of a prompt
+    /// @return Returns true or false
     function isMember(uint256 _tokenId, address _account) external view virtual returns (bool) {
         return membership[_tokenId][_account];
     }
 
+    /// @notice Check if prompt all members of a prompt contributed
+    /// @return Returns true or false
     function isCompleted(uint256 _tokenId) external view virtual returns (bool) {
         return contributionCount[_tokenId] == memberLimit;
     }
 
+    /// @notice Get all prompt data
+    /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
     function getPrompt(uint256 _tokenId) external view virtual
         returns (
             address,
