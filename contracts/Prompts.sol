@@ -35,6 +35,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (uint256 => Contribution[]) public contributions; // contributions[tokenId]
     mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
     mapping (uint256 => mapping (address => bool)) public contributed; // contributed[tokenId][address]
+    mapping (address => bool) public allowlist; // allowlist[address]
 
     uint256 public memberLimit;
     uint256 public totalSupply;
@@ -61,6 +62,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         totalSupply = _totalSupply;
         mintFee = _mintFee;
         feeAddress = _feeAddress;
+        allowlist[msg.sender] = true;
     }
 
     modifier onlyMemberOf(uint256 _tokenId) {
@@ -99,10 +101,16 @@ contract Prompts is ERC721URIStorage, Ownable {
             'member already contributed');
         _;
     }
+    modifier isAllowed() {
+        require (allowlist[msg.sender] == true,
+            'account is not in allowlist');
+        _;
+    }
 
     function mint(address _to, uint256 _endsAt, address[] memory _members, string memory _contributionURI)
         external
         isNotEmpty(_contributionURI)
+        isAllowed()
     {
         require(_tokenIds.current() < totalSupply, "reached token supply limit");
         require(_to != address(0), 'address cannot be null address');
@@ -116,6 +124,7 @@ contract Prompts is ERC721URIStorage, Ownable {
             membership[newTokenId][_members[i]] = true;
             memberCount[newTokenId]++;
             members[newTokenId].push(_members[i]);
+            allowlist[_members[i]] = true;
         }
 
         endsAt[newTokenId] = _endsAt;
@@ -147,6 +156,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         membership[_tokenId][_account] = true;
         memberCount[_tokenId]++;
         members[_tokenId].push(_account);
+        allowlist[_account] = true;
 
         emit MemberAdded(_tokenId, _account);
     }

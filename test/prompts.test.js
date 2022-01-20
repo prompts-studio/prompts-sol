@@ -9,7 +9,7 @@ const {
 const name = 'Prompts';
 const symbol = 'PNFT';
 const memberLimit = 4;
-const totalSupply = 1;
+const totalSupply = 2;
 const mintFee = ethers.utils.parseUnits('0.001', 'ether');
 
 const tokenId = 0;
@@ -98,6 +98,10 @@ describe('Prompt contract', function () {
 
     describe("Prompt", function () {
 
+        it("deployer address in the allowlist", async function () {
+            expect(await prompt.allowlist(owner.address)).to.equal(true);
+        });
+
         it("mints a token with endsAt, members, and first contribution", async function () {
             let members = [owner.address, addr1.address, addr2.address];
             // const currentBlocknumber = await blockNumber();
@@ -115,18 +119,38 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, owner.address, endsAt, members, contributionURI_0, owner.address);
         });
 
-        it("has minted token count", async function () {
-            expect(await prompt.tokenCount()).to.equal(1);
+        it("cannot mint if not in allowlist", async function () {
+            let members = [owner.address, addr1.address, addr2.address];
+            const blocktime = await blockTime();
+            const endsAt = blocktime + promptDuration;
+
+            // Note that await is outside of expect for reverted to work
+            await expect(prompt.connect(addr6).mint(addr6.address, endsAt, members, contributionURI_0))
+                .to.be.reverted;
         });
 
-        // it("cannot mint if reached token supply limit", async function () {
-        //     let members = [owner.address, addr1.address, addr2.address];
-        //     const blocktime = await blockTime();
-        //     const endsAt = blocktime + promptDuration;
+        it("can mint if in allowlist", async function () {
+            let members = [owner.address, addr1.address, addr2.address];
+            const blocktime = await blockTime();
+            const endsAt = blocktime + promptDuration;
 
-        //     expect(await prompt.mint(owner.address, endsAt, members, contributionURI_0))
-        //         .should.be.rejectedWith('reached token supply limit');
-        // });
+            expect(await prompt.connect(addr1).mint(addr1.address, endsAt, members, contributionURI_0))
+                .to.emit(prompt, "Minted")
+                .withArgs(tokenId+1, addr1.address, endsAt, members, contributionURI_0, addr1.address);
+        });
+
+        it("cannot mint if reached token supply limit", async function () {
+            let members = [owner.address, addr1.address, addr2.address];
+            const blocktime = await blockTime();
+            const endsAt = blocktime + promptDuration;
+
+            await expect(prompt.mint(owner.address, endsAt, members, contributionURI_0))
+                .to.be.revertedWith('reached token supply limit');
+        });
+
+        it("has token count", async function () {
+            expect(await prompt.tokenCount()).to.equal(totalSupply);
+        });
 
         it("is an empty NFT", async function () {
             expect(await prompt.tokenURI(tokenId)).to.equal('');
@@ -163,14 +187,14 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, contributionURI_1, addr1.address);
         });
 
-        // it("cannot finalize if not ended and not completed", async function () {
-        //     // not yet ended && not yet completed, so should be reverted
-        //     const contributionCount = await prompt.contributionCount(tokenId);
-        //     console.log('contributionCount', contributionCount.toString());
+        it("cannot finalize if not ended and not completed", async function () {
+            // not yet ended && not yet completed, so should be reverted
+            const contributionCount = await prompt.contributionCount(tokenId);
+            // console.log('contributionCount', contributionCount.toString());
 
-        //     expect(await prompt.finalize(tokenId, tokenURI))
-        //         .to.be.reverted;
-        // });
+            await expect(prompt.finalize(tokenId, tokenURI))
+                .to.be.reverted;
+        });
 
         it("a member cannot contribute more than once", async function () {
             const member = await prompt.connect(addr1);
