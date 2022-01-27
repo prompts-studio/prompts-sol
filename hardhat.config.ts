@@ -28,10 +28,11 @@ const ALCHEMY_API_KEY = 'M0xX8h6zqK-kKS68cx9RYK1HTfdlmD6r';
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
 // Be aware of NEVER putting real Ether into testing accounts
-const ROPSTEN_PRIVATE_KEY = '56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027';
+const ROPSTEN_PRIVATE_KEY = 'd77177e2aecae71a65c3926a1d44ce0e9608fe6af91568d4618e0636daf7f2a7';
 
-// Deployed contract address
-const CONTRACT_ADDRESS = '0x1678B18a370C65004c8e4e03b6bf4bE76EaDf4F1';
+// Deployed contract address for Etherscan verification
+const CONTRACT_ADDRESS = '0x8C75a5ECcE1df964262fB64B290e42F41B1e80Ad';
+const FEE_ADDRESS = '0x0249d0d547F5F4bb33790E04A503ae1c6822b8B6';
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
@@ -56,7 +57,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const memberLimit = 3;
   const supply = 100;
   const mintFee = hre.ethers.utils.parseUnits("0.001", "ether");
-  const feeAddress = "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC";
+  const feeAddress = FEE_ADDRESS;
 
   await hre.run("verify:verify", {
     address: CONTRACT_ADDRESS,

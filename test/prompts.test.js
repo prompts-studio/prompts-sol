@@ -180,6 +180,18 @@ describe('Prompt contract', function () {
             expect(await prompt.memberCount(tokenId)).to.be.equal(4);
         });
 
+        it("get prompt", async function () {
+            const myPrompt = await prompt.getPrompt(tokenId);
+            console.log(myPrompt);
+
+            const membersCheck = [owner.address, addr1.address, addr2.address, addr3.address];
+            expect(myPrompt[0]).to.eql(owner.address);
+            expect(myPrompt[1]).to.gt(await blockTime());
+            expect(myPrompt[2]).to.eql(''); // tokenURI
+            expect(myPrompt[3]).to.eql(membersCheck); // deep equality check for arrays
+            // myPrompt[4] // contributions array
+        });
+
         it("a member can contribute", async function () {
             const member = await prompt.connect(addr1);
             await expect(member.contribute(tokenId, contributionURI_1))
@@ -196,6 +208,12 @@ describe('Prompt contract', function () {
                 .to.be.reverted;
         });
 
+        it("cannot contribute and finalize if not the last contribution", async function () {
+            const member = await prompt.connect(addr3);
+            await expect(member.contributeAndFinalize(tokenId, contributionURI_2, tokenURI))
+                .to.be.reverted;
+        });
+
         it("a member cannot contribute more than once", async function () {
             const member = await prompt.connect(addr1);
             await expect(member.contribute(tokenId, contributionURI_1))
@@ -209,17 +227,24 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, contributionURI_2, addr2.address);
         });
 
-        it("last member can contribute", async function () {
-            const member = await prompt.connect(addr3);
-            await expect(member.contribute(tokenId, contributionURI_2))
-                .to.emit(prompt, "Contributed")
-                .withArgs(tokenId, contributionURI_2, addr3.address);
-        });
-
         it("non-members are not allowed to contribute", async function () {
             await expect(prompt.connect(addr5).contribute(tokenId, contributionURI_2))
                 .to.be.reverted;
         });
+
+        it("last member can contribute and finalize at once", async function () {
+            const member = await prompt.connect(addr3);
+            expect(await member.contributeAndFinalize(tokenId, contributionURI_2, tokenURI))
+            .to.emit(prompt, "ContributedAndFinalized")
+            .withArgs(tokenId, tokenURI, owner.address, contributionURI_2, addr3.address);
+        });
+
+        // it("last member can contribute", async function () {
+        //     const member = await prompt.connect(addr3);
+        //     await expect(member.contribute(tokenId, contributionURI_2))
+        //         .to.emit(prompt, "Contributed")
+        //         .withArgs(tokenId, contributionURI_2, addr3.address);
+        // });
 
         // it("non-members can contribute", async function () {
         //     const promptCallFromNonmember = await prompt.connect(addr3);
@@ -234,18 +259,6 @@ describe('Prompt contract', function () {
             // console.log('isCompleted', isCompleted);
             // console.log('memberCount', memberCount);
             expect(isCompleted).to.equal(true);
-        });
-
-        it("get prompt", async function () {
-            const myPrompt = await prompt.getPrompt(tokenId);
-            console.log(myPrompt);
-
-            const membersCheck = [owner.address, addr1.address, addr2.address, addr3.address];
-            expect(myPrompt[0]).to.eql(owner.address);
-            expect(myPrompt[1]).to.gt(await blockTime());
-            expect(myPrompt[2]).to.eql(''); // tokenURI
-            expect(myPrompt[3]).to.eql(membersCheck); // deep equality check for arrays
-            // myPrompt[4] // contributions array
         });
 
         it("any member can finalize", async function () {

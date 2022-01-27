@@ -43,7 +43,8 @@ yarn
 3. Test (compiles and runs on local Hardhat network)
 ```sh
 yarn test
-Prompt contract
+
+  Prompt contract
     Deployment
       ✓ has a name
       ✓ has a symbol
@@ -62,14 +63,15 @@ Prompt contract
       ✓ owner can add a new member
       ✓ cannot add member if limit is reached
       ✓ has total 4 members
+      ✓ get prompt
       ✓ a member can contribute
       ✓ cannot finalize if not ended and not completed
+      ✓ cannot contribute and finalize if not the last contribution
       ✓ a member cannot contribute more than once
       ✓ another member can contribute
-      ✓ last member can contribute
       ✓ non-members are not allowed to contribute
+      ✓ last member can contribute and finalize at once
       ✓ is prompt completed?
-      ✓ get prompt
       ✓ any member can finalize
       ✓ is a finalized NFT
 ```
@@ -154,11 +156,12 @@ yarn deploy --network mainnet
 
 Verify contract on Etherscan
 ```sh
-# Add the deployed contract address in hardhat.config.ts
-const CONTRACT_ADDRESS = '0x1678B18a370C65004c8e4e03b6bf4bE76EaDf4F1';
+# Add the deployed contract address and correct fee address in hardhat.config.ts
+const CONTRACT_ADDRESS = '0x8C75a5ECcE1df964262fB64B290e42F41B1e80Ad';
+const FEE_ADDRESS = '0x0249d0d547F5F4bb33790E04A503ae1c6822b8B6';
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.js 0x1678B18a370C65004c8e4e03b6bf4bE76EaDf4F1
+npx hardhat verify --network ropsten --constructor-args arguments.js 0x8C75a5ECcE1df964262fB64B290e42F41B1e80Ad
 ```
 
 ## Interact with Smart Contract

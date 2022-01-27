@@ -18,6 +18,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, string contributionURI, address creator);
     event Finalized(uint256 tokenId, string tokenURI, address to);
+    event ContributedAndFinalized(uint256 tokenId, string tokenURI, address owner, string contributionURI, address contributor);
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -65,15 +66,20 @@ contract Prompts is ERC721URIStorage, Ownable {
         allowlist[msg.sender] = true;
     }
 
-    modifier onlyMemberOf(uint256 _tokenId) {
-        if (membership[_tokenId][msg.sender] == false) {
-            revert('not a prompt member');
-        }
+    modifier isAllowed() {
+        require (allowlist[msg.sender] == true,
+            'account is not in allowlist');
         _;
     }
     modifier onlyOwnerOf(uint256 _tokenId) {
         if (msg.sender != ownerOf(_tokenId)) {
             revert('not the prompt owner');
+        }
+        _;
+    }
+    modifier onlyMemberOf(uint256 _tokenId) {
+        if (membership[_tokenId][msg.sender] == false) {
+            revert('not a prompt member');
         }
         _;
     }
@@ -88,22 +94,22 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier isNotEmpty(string memory _content) {
-        require(bytes(_content).length != 0, 'contribution cannot be empty');
+        require(bytes(_content).length != 0, 'URI cannot be empty');
+        _;
+    }
+    modifier memberNotContributed(uint256 _tokenId) {
+        require (contributed[_tokenId][msg.sender] == false,
+            'member already contributed');
+        _;
+    }
+    modifier isLastContribution(uint _tokenId) {
+        require(contributionCount[_tokenId] == memberLimit - 1,
+            'is not the last contribution');
         _;
     }
     modifier finalizable(uint _tokenId) {
         require(contributionCount[_tokenId] == memberLimit || endsAt[_tokenId] <= block.timestamp,
             'not all members contributed or prompt has not ended yet');
-        _;
-    }
-    modifier isNotContributed(uint256 _tokenId) {
-        require (contributed[_tokenId][msg.sender] == false,
-            'member already contributed');
-        _;
-    }
-    modifier isAllowed() {
-        require (allowlist[msg.sender] == true,
-            'account is not in allowlist');
         _;
     }
 
@@ -133,7 +139,6 @@ contract Prompts is ERC721URIStorage, Ownable {
         contributed[newTokenId][msg.sender] = true;
         contributionCount[newTokenId]++;
 
-        // TODO: map allowlist for minters
         // TODO: payable mint (transfer mintFee from sender to feeAddress)
         // TODO: name in members?
         _safeMint(_to, newTokenId);
@@ -166,7 +171,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
         isNotEmpty(_contributionURI)
-        isNotContributed(_tokenId)
+        memberNotContributed(_tokenId)
     {
         contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
         contributed[_tokenId][msg.sender] = true;
@@ -175,9 +180,27 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Contributed(_tokenId, _contributionURI, msg.sender);
     }
 
+    function contributeAndFinalize(uint256 _tokenId, string memory _contributionURI, string memory _tokenURI)
+        external
+        onlyMemberOf(_tokenId)
+        isNotEmpty(_contributionURI)
+        isNotEmpty(_tokenURI)
+        memberNotContributed(_tokenId)
+        isLastContribution(_tokenId)
+    {
+        contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
+        contributed[_tokenId][msg.sender] = true;
+        contributionCount[_tokenId]++;
+
+        _setTokenURI(_tokenId, _tokenURI);
+
+        emit ContributedAndFinalized(_tokenId, _tokenURI, ownerOf(_tokenId), _contributionURI, msg.sender);
+    }
+
     function finalize(uint256 _tokenId, string memory _tokenURI)
         external
         onlyMemberOf(_tokenId)
+        isNotEmpty(_tokenURI)
         finalizable(_tokenId)
     {
         _setTokenURI(_tokenId, _tokenURI);
@@ -197,7 +220,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         return membership[_tokenId][_account];
     }
 
-    /// @notice Check if prompt all members of a prompt contributed
+    /// @notice Check if all prompt members contributed
     /// @return Returns true or false
     function isCompleted(uint256 _tokenId) external view virtual returns (bool) {
         return contributionCount[_tokenId] == memberLimit;
