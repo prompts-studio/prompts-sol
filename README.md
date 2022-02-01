@@ -79,12 +79,13 @@ yarn test
 Note that `getPrompt(tokenId)` returns full prompt data:
 - `address` owner
 - `blocktime` endsAt
+- `string` tokenURI
 - `address[]` members
 - `Contribution[]` contributions
 ```js
 [
   '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-  BigNumber { _hex: '0x61eb1cd3', _isBigNumber: true },
+  BigNumber { _hex: '0x61f354b9', _isBigNumber: true },
   '',
   [
     '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
@@ -100,37 +101,22 @@ Note that `getPrompt(tokenId)` returns full prompt data:
       contributionURI: 'https://zero...',
       createdAt: [BigNumber],
       creator: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    ],
-    [
-      'https://one...',
-      [BigNumber],
-      '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-      contributionURI: 'https://one...',
-      createdAt: [BigNumber],
-      creator: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-    ],
-    [
-      'https://two...',
-      [BigNumber],
-      '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
-      contributionURI: 'https://two...',
-      createdAt: [BigNumber],
-      creator: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
-    ],
-    [
-      'https://two...',
-      [BigNumber],
-      '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
-      contributionURI: 'https://two...',
-      createdAt: [BigNumber],
-      creator: '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
     ]
   ]
-]
+]s
 ```
+
 ## Deployment
 
-Runs `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
+Make sure you have a `.env` file in the project root directory:
+
+```sh
+ETHERSCAN_KEY=
+ALCHEMY_API_KEY=
+ROPSTEN_PRIVATE_KEY=
+```
+
+Commands below run `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
 
 Deploy to local Hardhat network
 ```sh
@@ -156,12 +142,14 @@ yarn deploy --network mainnet
 
 Verify contract on Etherscan
 ```sh
-# Add the deployed contract address and correct fee address in hardhat.config.ts
-const CONTRACT_ADDRESS = '0x8C75a5ECcE1df964262fB64B290e42F41B1e80Ad';
-const FEE_ADDRESS = '0x0249d0d547F5F4bb33790E04A503ae1c6822b8B6';
+# Update hardhat.config.ts with deployed contract address
+const CONTRACT_ADDRESS = '0xd6c41d592De50EA0834c92AA4658C43742E30205';
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.js 0x8C75a5ECcE1df964262fB64B290e42F41B1e80Ad
+npx hardhat verify --network ropsten --constructor-args arguments.js 0xd6c41d592De50EA0834c92AA4658C43742E30205 --show-stack-traces
+
+# Clear the cache and delete the artifacts
+npx hardhat clean
 ```
 
 ## Interact with Smart Contract

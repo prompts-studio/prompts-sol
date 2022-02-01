@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { task } from "hardhat/config"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { BigNumber } from "ethers"
@@ -22,16 +23,16 @@ const forkingData = FORK_FUJI ? {
 
 // Go to https://www.alchemyapi.io, sign up, create
 // a new App in its dashboard, and replace "KEY" with its key
-const ALCHEMY_API_KEY = 'M0xX8h6zqK-kKS68cx9RYK1HTfdlmD6r';
+const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 
 // Replace this private key with your Ropsten account private key
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
 // Be aware of NEVER putting real Ether into testing accounts
-const ROPSTEN_PRIVATE_KEY = 'd77177e2aecae71a65c3926a1d44ce0e9608fe6af91568d4618e0636daf7f2a7';
+const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
 
 // Deployed contract address for Etherscan verification
-const CONTRACT_ADDRESS = '0x8C75a5ECcE1df964262fB64B290e42F41B1e80Ad';
+const CONTRACT_ADDRESS = '0xd6c41d592De50EA0834c92AA4658C43742E30205';
 const FEE_ADDRESS = '0x0249d0d547F5F4bb33790E04A503ae1c6822b8B6';
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
@@ -139,7 +140,7 @@ export default {
     }
   },
   etherscan: {
-    apiKey: "QWKNT3XBEPI5E6NBF7RR371Q6SRP5V6SFN"
+    apiKey: process.env.ETHERSCAN_KEY
     // {
     //   ropsten:"QWKNT3XBEPI5E6NBF7RR371Q6SRP5V6SFN",
     //   avalanche: "QDUQ5UXGEVESDVFVMD5FGFZQPINPF5I5G1",

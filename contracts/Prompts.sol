@@ -10,9 +10,11 @@ import "hardhat/console.sol";
 
 /// @title Prompts
 /// @author Burak Arıkan & Sam Hart
-/// @dev extends ERC721 with empty minting, duration, and verified contributors
+/// @notice extends ERC721 with collective creation and verified contributions
 
 contract Prompts is ERC721URIStorage, Ownable {
+
+    /// ============ Events ============
 
     event Minted(uint256 tokenId, address to, uint256 end, address[] members, string contributionURI, address minter);
     event MemberAdded(uint256 tokenId, address account);
@@ -20,8 +22,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     event Finalized(uint256 tokenId, string tokenURI, address to);
     event ContributedAndFinalized(uint256 tokenId, string tokenURI, address owner, string contributionURI, address contributor);
 
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    /// ============ Structs ============
 
     struct Contribution {
         string contributionURI;
@@ -29,6 +30,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         address creator;
     }
 
+    /// ============ Mutable storage ============
+
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
     mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
     mapping (uint256 => address[]) public members; // endsAt[tokenId]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
@@ -38,17 +43,29 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (uint256 => mapping (address => bool)) public contributed; // contributed[tokenId][address]
     mapping (address => bool) public allowlist; // allowlist[address]
 
+
+    /// ============ Immutable storage ============
+
     uint256 public memberLimit;
     uint256 public totalSupply;
-    uint public mintFee;
+    uint public mintCost;
     address public feeAddress;
 
+    /// ============ Constructor ============
+
+    /// @notice Creates a new Prompts NFT contract
+    /// @param tokenName name of NFT
+    /// @param tokenSymbol symbol of NFT
+    /// @param _memberLimit member limit of each NFT
+    /// @param _totalSupply total NFTs to mint
+    /// @param _mintCost in wei per NFT
+    /// @param _feeAddress where mint costs are paid
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
         uint256 _memberLimit,
         uint256 _totalSupply,
-        uint256 _mintFee,
+        uint256 _mintCost,
         address _feeAddress
     ) ERC721(
         tokenName,
@@ -56,15 +73,17 @@ contract Prompts is ERC721URIStorage, Ownable {
     ) {
         require(_memberLimit >= 2, "_memberLimit cannot be smaller than 2");
         require(_totalSupply > 0, "_totalSupply cannot be 0");
-        require(_mintFee > 0, "_mintFee cannot be 0");
+        require(_mintCost > 0, "_mintCost cannot be 0");
         require(_feeAddress != address(0), "feeAddress cannot be null address");
 
         memberLimit = _memberLimit;
         totalSupply = _totalSupply;
-        mintFee = _mintFee;
+        mintCost = _mintCost;
         feeAddress = _feeAddress;
         allowlist[msg.sender] = true;
     }
+
+    /// ============ Modifiers ============
 
     modifier isAllowed() {
         require (allowlist[msg.sender] == true,
@@ -113,6 +132,8 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
 
+    /// ============ Functions ============
+
     function mint(address _to, uint256 _endsAt, address[] memory _members, string memory _contributionURI)
         external
         isNotEmpty(_contributionURI)
@@ -139,7 +160,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         contributed[newTokenId][msg.sender] = true;
         contributionCount[newTokenId]++;
 
-        // TODO: payable mint (transfer mintFee from sender to feeAddress)
+        // TODO: payable mint (transfer mintCost from sender to feeAddress)
         // TODO: name in members?
         _safeMint(_to, newTokenId);
         // _setTokenURI(newTokenId, _tokenURI); // <- empty NFT
@@ -208,6 +229,8 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Finalized(_tokenId, _tokenURI, ownerOf(_tokenId));
     }
 
+    /// ============ Read-only funtions ============
+
     /// @notice Get current count of minted tokens
     /// @return Returns number
     function tokenCount() external view virtual returns (uint256) {
@@ -226,7 +249,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributionCount[_tokenId] == memberLimit;
     }
 
-    /// @notice Get all prompt data
+    /// @notice Get a prompt's all data
     /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
     function getPrompt(uint256 _tokenId) external view virtual
         returns (

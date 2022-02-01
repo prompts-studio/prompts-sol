@@ -10,7 +10,7 @@ const name = 'Prompts';
 const symbol = 'PNFT';
 const memberLimit = 4;
 const totalSupply = 2;
-const mintFee = ethers.utils.parseUnits('0.001', 'ether');
+const mintCost = ethers.utils.parseUnits('0.001', 'ether');
 
 const tokenId = 0;
 const tokenURI = "https://...";
@@ -65,7 +65,7 @@ describe('Prompt contract', function () {
         [owner, addr1, addr2, addr3, addr4, addr5, addr6, ...addrs] = await ethers.getSigners();
         const feeAddress = owner.address;
 
-        prompt = await Prompt.deploy(name, symbol, memberLimit, totalSupply, mintFee, feeAddress);
+        prompt = await Prompt.deploy(name, symbol, memberLimit, totalSupply, mintCost, feeAddress);
         await prompt.deployed();
 
         // const currentBlocknumber = await blockNumber();
@@ -88,10 +88,10 @@ describe('Prompt contract', function () {
             expect(await prompt.owner()).to.equal(owner.address);
         });
 
-        it("has deployment parameters: memberLimit, totalSupply, mintFee, feeAddress", async function () {
+        it("has deployment parameters: memberLimit, totalSupply, mintCost, feeAddress", async function () {
             expect(await prompt.memberLimit()).to.equal(memberLimit);
             expect(await prompt.totalSupply()).to.equal(totalSupply);
-            expect(await prompt.mintFee()).to.equal(mintFee);
+            expect(await prompt.mintCost()).to.equal(mintCost);
             expect(await prompt.feeAddress()).to.equal(owner.address);
         });
     });
