@@ -118,22 +118,17 @@ ROPSTEN_PRIVATE_KEY=
 
 Commands below run `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
 
-Deploy to local Hardhat network
 ```sh
+# Deploy to local Hardhat network
 yarn deploy
-```
 
-Deploy to Ropsten
-```sh
+# Deploy to Ropsten testnet
 yarn deploy --network ropsten
-```
 
-Deploy to Avalanche
-```sh
-# Deploy to local network (run Avash https://docs.avax.network/build/tools/avash)
+# Deploy to Avalanche local network (run Avash https://docs.avax.network/build/tools/avash)
 yarn deploy --network local
 
-# Deploy to Fuji (Avalanche testnet)
+# Deploy to Avalanche testnet Fuji
 yarn deploy --network fuji
 
 # Deploy to Avalanche mainnet
@@ -148,7 +143,7 @@ const CONTRACT_ADDRESS = '0xd6c41d592De50EA0834c92AA4658C43742E30205';
 # Verify the contract on Etherscan
 npx hardhat verify --network ropsten --constructor-args arguments.js 0xd6c41d592De50EA0834c92AA4658C43742E30205 --show-stack-traces
 
-# Clear the cache and delete the artifacts
+# Clear the cache and delete the artifacts if you have verification problems
 npx hardhat clean
 ```
 
