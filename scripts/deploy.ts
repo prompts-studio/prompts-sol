@@ -10,6 +10,7 @@ const main = async(): Promise<any> => {
     console.log("Deployer account:", owner.address);
     console.log("Account balance:", (await owner.getBalance()).toString());
 
+    // TODO: read from arguments.js
     const name = "Prompts";
     const symbol = "pNFT";
     const memberLimit = 3;
