@@ -31,10 +31,6 @@ const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 // Be aware of NEVER putting real Ether into testing accounts
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
 
-// Deployed contract address for Etherscan verification
-const CONTRACT_ADDRESS = '0xd6c41d592De50EA0834c92AA4658C43742E30205';
-const FEE_ADDRESS = '0x0249d0d547F5F4bb33790E04A503ae1c6822b8B6';
-
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
   accounts.forEach((account: SignerWithAddress): void => {
@@ -56,18 +52,18 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const name = "Prompts";
   const symbol = "pNFT";
   const memberLimit = 3;
-  const supply = 100;
-  const mintFee = hre.ethers.utils.parseUnits("0.001", "ether");
-  const feeAddress = FEE_ADDRESS;
+  const supply = 120;
+  const mintCost = hre.ethers.utils.parseUnits("0.001", "ether");
+  const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: CONTRACT_ADDRESS,
+    address: process.env.CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
       memberLimit,
       supply,
-      mintFee,
+      mintCost,
       feeAddress
     ],
   });
@@ -90,6 +86,9 @@ export default {
       },
       {
         version: "0.8.0",
+      },
+      {
+        version: "0.8.11",
         settings: {
           optimizer: {
             enabled: true,
@@ -140,10 +139,12 @@ export default {
     }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY
-    // {
-    //   ropsten:"QWKNT3XBEPI5E6NBF7RR371Q6SRP5V6SFN",
-    //   avalanche: "QDUQ5UXGEVESDVFVMD5FGFZQPINPF5I5G1",
-    // }
+    apiKey:
+    // process.env.ETHERSCAN_KEY
+    {
+      ropsten: process.env.ETHERSCAN_KEY,
+      avalanche: process.env.SNOWTRACE_KEY,
+      avalancheFujiTestnet: process.env.SNOWTRACE_KEY,
+    }
   }
 }
