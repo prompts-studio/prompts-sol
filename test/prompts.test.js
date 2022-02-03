@@ -1,9 +1,9 @@
-const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const {
-    constants,
-    BN,
-  } = require('@openzeppelin/test-helpers');
+const { expect } = require('chai');
+// const {
+//     constants,
+//     BN,
+// } = require('@openzeppelin/test-helpers');
 // const { ZERO_ADDRESS } = constants;
 
 const name = 'Prompts';
@@ -13,6 +13,7 @@ const totalSupply = 2;
 const mintCost = ethers.utils.parseUnits('0.001', 'ether');
 
 const tokenId = 0;
+const tokenId_1 = 1;
 const tokenURI = "https://...";
 // const promptURI = "https://...";
 
@@ -136,8 +137,32 @@ describe('Prompt contract', function () {
 
             expect(await prompt.connect(addr1).mint(addr1.address, endsAt, members, contributionURI_0))
                 .to.emit(prompt, "Minted")
-                .withArgs(tokenId+1, addr1.address, endsAt, members, contributionURI_0, addr1.address);
+                .withArgs(tokenId_1, addr1.address, endsAt, members, contributionURI_0, addr1.address);
         });
+
+        it("owner contributed token 0", async function () {
+            const tokenId_big = ethers.BigNumber.from(tokenId);
+            const tokens = [tokenId_big];
+            expect(await prompt.getContributedTokens(owner.address)).to.eql(tokens);
+        });
+
+        // Testing contribution to multiple token
+        // it("can mint one more", async function () {
+        //     let members = [owner.address, addr1.address, addr2.address];
+        //     const blocktime = await blockTime();
+        //     const endsAt = blocktime + promptDuration;
+
+        //     expect(await prompt.mint(owner.address, endsAt, members, contributionURI_0))
+        //         .to.emit(prompt, "Minted")
+        //         .withArgs(tokenId_1, owner.address, endsAt, members, contributionURI_0, owner.address);
+        // });
+
+        // it("owner contributed tokens 0 and 1", async function () {
+        //     const tokenId_big = ethers.BigNumber.from(tokenId);
+        //     const tokenId_1_big = ethers.BigNumber.from(tokenId_1);
+        //     const tokens = [tokenId_big, tokenId_1_big];
+        //     expect(await prompt.getContributedTokens(owner.address)).to.eql(tokens);
+        // });
 
         it("cannot mint if reached token supply limit", async function () {
             let members = [owner.address, addr1.address, addr2.address];
@@ -185,8 +210,8 @@ describe('Prompt contract', function () {
             console.log(myPrompt);
 
             const membersCheck = [owner.address, addr1.address, addr2.address, addr3.address];
-            expect(myPrompt[0]).to.eql(owner.address);
-            expect(myPrompt[1]).to.gt(await blockTime());
+            expect(myPrompt[0]).to.eql(owner.address); // owner
+            expect(myPrompt[1]).to.gt(await blockTime()); //endsAt
             expect(myPrompt[2]).to.eql(''); // tokenURI
             expect(myPrompt[3]).to.eql(membersCheck); // deep equality check for arrays
             // myPrompt[4] // contributions array
@@ -237,6 +262,14 @@ describe('Prompt contract', function () {
             expect(await member.contributeAndFinalize(tokenId, contributionURI_2, tokenURI))
             .to.emit(prompt, "ContributedAndFinalized")
             .withArgs(tokenId, tokenURI, owner.address, contributionURI_2, addr3.address);
+        });
+
+        it("addr1 contributed token 1 and 0", async function () {
+            // in reverse order because add1 first minted&contr token_1 then contr token_0
+            const tokenId_1_big = ethers.BigNumber.from(tokenId_1);
+            const tokenId_big = ethers.BigNumber.from(tokenId);
+            const tokens = [tokenId_1_big, tokenId_big];
+            expect(await prompt.getContributedTokens(addr1.address)).to.eql(tokens);
         });
 
         // it("last member can contribute", async function () {

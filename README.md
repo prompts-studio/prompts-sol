@@ -49,12 +49,13 @@ yarn test
       ✓ has a name
       ✓ has a symbol
       ✓ has an owner
-      ✓ has deployment parameters: memberLimit, totalSupply, mintFee, feeAddress
+      ✓ has deployment parameters: memberLimit, totalSupply, mintCost, feeAddress
     Prompt
       ✓ deployer address in the allowlist
       ✓ mints a token with endsAt, members, and first contribution
       ✓ cannot mint if not in allowlist
       ✓ can mint if in allowlist
+      ✓ owner contributed token 0
       ✓ cannot mint if reached token supply limit
       ✓ has token count
       ✓ is an empty NFT
@@ -71,6 +72,7 @@ yarn test
       ✓ another member can contribute
       ✓ non-members are not allowed to contribute
       ✓ last member can contribute and finalize at once
+      ✓ addr1 contributed token 1 and 0
       ✓ is prompt completed?
       ✓ any member can finalize
       ✓ is a finalized NFT

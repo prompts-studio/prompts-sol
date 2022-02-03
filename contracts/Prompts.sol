@@ -35,14 +35,14 @@ contract Prompts is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
-    mapping (uint256 => address[]) public members; // endsAt[tokenId]
+    mapping (uint256 => address[]) public members; // members[tokenId]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
     mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
     mapping (uint256 => Contribution[]) public contributions; // contributions[tokenId]
     mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
     mapping (uint256 => mapping (address => bool)) public contributed; // contributed[tokenId][address]
+    mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
     mapping (address => bool) public allowlist; // allowlist[address]
-
 
     /// ============ Immutable storage ============
 
@@ -159,6 +159,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         contributions[newTokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
         contributed[newTokenId][msg.sender] = true;
         contributionCount[newTokenId]++;
+        contributedTokens[msg.sender].push(newTokenId);
 
         // TODO: payable mint (transfer mintCost from sender to feeAddress)
         // TODO: name in members?
@@ -196,6 +197,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     {
         contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
         contributed[_tokenId][msg.sender] = true;
+        contributedTokens[msg.sender].push(_tokenId);
         contributionCount[_tokenId]++;
 
         emit Contributed(_tokenId, _contributionURI, msg.sender);
@@ -211,6 +213,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     {
         contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
         contributed[_tokenId][msg.sender] = true;
+        contributedTokens[msg.sender].push(_tokenId);
         contributionCount[_tokenId]++;
 
         _setTokenURI(_tokenId, _tokenURI);
@@ -247,6 +250,10 @@ contract Prompts is ERC721URIStorage, Ownable {
     /// @return Returns true or false
     function isCompleted(uint256 _tokenId) external view virtual returns (bool) {
         return contributionCount[_tokenId] == memberLimit;
+    }
+
+    function getContributedTokens(address _account) external view virtual returns (uint256[] memory) {
+        return contributedTokens[_account];
     }
 
     /// @notice Get a prompt's all data
