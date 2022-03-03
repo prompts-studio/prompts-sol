@@ -142,10 +142,10 @@ yarn deploy --network mainnet
 Verify contract on Etherscan
 ```sh
 # Update .env with deployed contract address
-CONTRACT_ADDRESS=0x2a8a9792C28d07E9862a4Ab42Eca5f0E65f0eCBE
+CONTRACT_ADDRESS=0xf723f0A323B6a412c13F8664Fe9948e5a71Ac6af
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.ts 0x2a8a9792C28d07E9862a4Ab42Eca5f0E65f0eCBE --show-stack-traces
+npx hardhat verify --network ropsten --constructor-args arguments.ts 0xf723f0A323B6a412c13F8664Fe9948e5a71Ac6af --show-stack-traces
 
 # Clear the cache and delete the artifacts if you have verification problems
 npx hardhat clean

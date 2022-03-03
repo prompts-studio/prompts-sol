@@ -12,23 +12,22 @@ import "hardhat/console.sol";
 /// @author Burak Arıkan & Sam Hart
 /// @notice extends ERC721 with collective creation and verified contributions
 
-contract Prompts is ERC721URIStorage, Ownable {
+contract Prompts1 is ERC721URIStorage, Ownable {
 
     /// ============ Events ============
 
-    event PromptCreated(uint256 tokenId, uint256 end, address[] members, string contributionURI, uint256 contributionPrice, address contributor);
+    event Minted(uint256 tokenId, address to, uint256 end, address[] members, string contributionURI, address minter);
     event MemberAdded(uint256 tokenId, address account);
-    event Contributed(uint256 tokenId, string contributionURI, address creator, uint256 price);
-    event PriceSet(uint256 tokenId, address contributor, uint256 price);
-    event Minted(uint256 tokenId, string tokenURI, address creator);
+    event Contributed(uint256 tokenId, string contributionURI, address creator);
+    event Finalized(uint256 tokenId, string tokenURI, address to);
+    event ContributedAndFinalized(uint256 tokenId, string tokenURI, address owner, string contributionURI, address contributor);
 
     /// ============ Structs ============
 
     struct Contribution {
         string contributionURI;
         uint256 createdAt;
-        address payable creator;
-        uint256 price;
+        address creator;
     }
 
     /// ============ Mutable storage ============
@@ -36,14 +35,12 @@ contract Prompts is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
-    mapping (uint256 => address) public reservedFor; // reservedFor[tokenId]
-    mapping (uint256 => bool) public minted; // minted[tokenId]
     mapping (uint256 => address[]) public members; // members[tokenId]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
     mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
     mapping (uint256 => Contribution[]) public contributions; // contributions[tokenId]
     mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
-    mapping (uint256 => mapping (address => Contribution)) public contributed; // contributed[tokenId][address]
+    mapping (uint256 => mapping (address => bool)) public contributed; // contributed[tokenId][address]
     mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
     mapping (address => bool) public allowlist; // allowlist[address]
 
@@ -52,7 +49,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     uint256 public memberLimit;
     uint256 public totalSupply;
     uint public mintCost;
-    address payable feeAddress;
+    address public feeAddress;
 
     /// ============ Constructor ============
 
@@ -82,7 +79,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         memberLimit = _memberLimit;
         totalSupply = _totalSupply;
         mintCost = _mintCost;
-        feeAddress = payable(_feeAddress);
+        feeAddress = _feeAddress;
         allowlist[msg.sender] = true;
     }
 
@@ -91,6 +88,12 @@ contract Prompts is ERC721URIStorage, Ownable {
     modifier isAllowed() {
         require (allowlist[msg.sender] == true,
             'account is not in allowlist');
+        _;
+    }
+    modifier onlyOwnerOf(uint256 _tokenId) {
+        if (msg.sender != ownerOf(_tokenId)) {
+            revert('not the prompt owner');
+        }
         _;
     }
     modifier onlyMemberOf(uint256 _tokenId) {
@@ -114,13 +117,8 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier memberNotContributed(uint256 _tokenId) {
-        require (contributed[_tokenId][msg.sender].creator == address(0),
-            'address already contributed');
-        _;
-    }
-    modifier memberContributed(uint256 _tokenId) {
-        require (contributed[_tokenId][msg.sender].creator == msg.sender,
-            'address is not the creator of this contribution');
+        require (contributed[_tokenId][msg.sender] == false,
+            'member already contributed');
         _;
     }
     modifier isLastContribution(uint _tokenId) {
@@ -129,19 +127,20 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier finalizable(uint _tokenId) {
-        require(contributionCount[_tokenId] == memberLimit || (endsAt[_tokenId] != 0 && endsAt[_tokenId] <= block.timestamp),
+        require(contributionCount[_tokenId] == memberLimit || endsAt[_tokenId] <= block.timestamp,
             'not all members contributed or prompt has not ended yet');
         _;
     }
 
     /// ============ Functions ============
-    // address _to,
-    function createPrompt(uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
+
+    function mint(address _to, uint256 _endsAt, address[] memory _members, string memory _contributionURI)
         external
         isNotEmpty(_contributionURI)
         isAllowed()
     {
         require(_tokenIds.current() < totalSupply, "reached token supply limit");
+        require(_to != address(0), 'address cannot be null address');
         require(_members.length <= memberLimit, "reached member limit");
 
         uint256 newTokenId = _tokenIds.current();
@@ -157,75 +156,78 @@ contract Prompts is ERC721URIStorage, Ownable {
 
         endsAt[newTokenId] = _endsAt;
 
-        // if (_to != address(0)) {
-        //     reservedFor[newTokenId] = _to;
-        // }
-
-        contributed[newTokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
-        contributions[newTokenId].push(contributed[newTokenId][msg.sender]);
-        contributedTokens[msg.sender].push(newTokenId);
+        contributions[newTokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
+        contributed[newTokenId][msg.sender] = true;
         contributionCount[newTokenId]++;
+        contributedTokens[msg.sender].push(newTokenId);
 
-        // _safeMint(_to, newTokenId);
+        _safeMint(_to, newTokenId);
+        // _setTokenURI(newTokenId, _tokenURI); // <- empty NFT
+
         _tokenIds.increment();
 
-        emit PromptCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender);
+        emit Minted(newTokenId, _to, _endsAt, _members, _contributionURI, msg.sender);
     }
 
-    function contribute(uint256 _tokenId, string memory _contributionURI, uint256 _contributionPrice)
+    function addMember(uint256 _tokenId, address _account)
+        external
+        isNotEnded(_tokenId)
+        onlyOwnerOf(_tokenId)
+    {
+        require(_account != address(0), 'address cannot be null address');
+        require(!membership[_tokenId][_account], 'address is already a member');
+        require(memberCount[_tokenId] < memberLimit, "reached member limit");
+
+        membership[_tokenId][_account] = true;
+        memberCount[_tokenId]++;
+        members[_tokenId].push(_account);
+        allowlist[_account] = true;
+
+        emit MemberAdded(_tokenId, _account);
+    }
+
+    function contribute(uint256 _tokenId, string memory _contributionURI)
         external
         isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
+        isNotEmpty(_contributionURI)
         memberNotContributed(_tokenId)
     {
-        contributed[_tokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
-        contributions[_tokenId].push(contributed[_tokenId][msg.sender]);
+        contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
+        contributed[_tokenId][msg.sender] = true;
         contributedTokens[msg.sender].push(_tokenId);
         contributionCount[_tokenId]++;
 
-        emit Contributed(_tokenId, _contributionURI, msg.sender, _contributionPrice);
+        emit Contributed(_tokenId, _contributionURI, msg.sender);
     }
 
-    function setPrice(uint256 _tokenId, uint256 _price)
+    function contributeAndFinalize(uint256 _tokenId, string memory _contributionURI, string memory _tokenURI)
         external
-        memberContributed(_tokenId)
+        onlyMemberOf(_tokenId)
+        isNotEmpty(_contributionURI)
+        isNotEmpty(_tokenURI)
+        memberNotContributed(_tokenId)
+        isLastContribution(_tokenId)
     {
-        contributed[_tokenId][msg.sender].price = _price;
+        contributions[_tokenId].push(Contribution(_contributionURI, block.timestamp, msg.sender));
+        contributed[_tokenId][msg.sender] = true;
+        contributedTokens[msg.sender].push(_tokenId);
+        contributionCount[_tokenId]++;
 
-        emit PriceSet(_tokenId, msg.sender, _price);
+        _setTokenURI(_tokenId, _tokenURI);
+
+        emit ContributedAndFinalized(_tokenId, _tokenURI, ownerOf(_tokenId), _contributionURI, msg.sender);
     }
 
-    // add string[] memory _contributionURIs if contributionToken
-    function mint(uint256 _tokenId, string memory _tokenURI)
+    function finalize(uint256 _tokenId, string memory _tokenURI)
         external
-        payable
+        onlyMemberOf(_tokenId)
         finalizable(_tokenId)
         isNotEmpty(_tokenURI)
     {
-        if (reservedFor[_tokenId] != address(0)) {
-            require(reservedFor[_tokenId] == msg.sender, "Mint is reserved");
-        }
-
-        uint256 totalPrice = 0;
-        for (uint256 i=0; i < contributions[_tokenId].length; i++) {
-            totalPrice += contributions[_tokenId][i].price;
-        }
-        // require(totalPrice > 0, "Price must be at least 1 wei");
-        require(msg.value == totalPrice + mintCost, "Payment must be equal to listing price + mint cost");
-
-        for (uint256 i=0; i < contributions[_tokenId].length; i++) {
-            contributions[_tokenId][i].creator.transfer(contributions[_tokenId][i].price);
-            // require(bytes(_contributionURIs[i]).length != 0, "URI cannot be empty");
-            // contributions[_tokenId][i].contributionURI = _contributionURIs[i];
-        }
-
-        feeAddress.transfer(mintCost);
-
-        _safeMint(msg.sender, _tokenId);
         _setTokenURI(_tokenId, _tokenURI);
-        minted[_tokenId] = true;
 
-        emit Minted(_tokenId, _tokenURI, msg.sender);
+        emit Finalized(_tokenId, _tokenURI, ownerOf(_tokenId));
     }
 
     /// ============ Read-only funtions ============
@@ -252,23 +254,21 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributedTokens[_account];
     }
 
-    /// @notice Get prompt data
-    /// @return Returns (endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
+    /// @notice Get a prompt's all data
+    /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
     function getPrompt(uint256 _tokenId) external view virtual
         returns (
+            address,
             uint256,
             string memory,
             address[] memory,
             Contribution[] memory
         )
     {
-        string memory tokenuri = "";
-        if (minted[_tokenId]) {
-            tokenuri = tokenURI(_tokenId);
-        }
         return(
+            ownerOf(_tokenId),
             endsAt[_tokenId],
-            tokenuri,
+            tokenURI(_tokenId),
             members[_tokenId],
             contributions[_tokenId]
         );
