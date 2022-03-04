@@ -237,15 +237,15 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, contributionURI_2, addr2.address, contributionPrice_2);
         });
 
-        it("get prompt", async function () {
+        it("get prompt not yet minted", async function () {
             const myPrompt = await prompt.getPrompt(tokenId);
             console.log(myPrompt);
 
-            // expect(myPrompt[0]).to.eql(owner.address); // owner
-            expect(myPrompt[0]).to.gt(await blockTime()); //endsAt
-            expect(myPrompt[1]).to.eql(''); // tokenURI
-            expect(myPrompt[2]).to.eql(members); // deep equality check for arrays
-            // myPrompt[3] // contributions array
+            expect(myPrompt[0]).to.eql("0x0000000000000000000000000000000000000000"); // owner, not yet minted
+            expect(myPrompt[1]).to.gt(await blockTime()); //endsAt
+            expect(myPrompt[2]).to.eql(''); // tokenURI, not yet minted
+            expect(myPrompt[3]).to.eql(members); // deep equality check for arrays
+            // myPrompt[4] // contributions array
         });
 
         // it("last member can contribute", async function () {
@@ -265,7 +265,7 @@ describe('Prompt contract', function () {
 
         it("anyone can mint if prompt completed", async function () {
             const myPrompt = await prompt.getPrompt(tokenId);
-            const contributions = myPrompt[3];
+            const contributions = myPrompt[4];
 
             let totalPrice = ethers.BigNumber.from(0);
             contributions.forEach(c => {
@@ -336,6 +336,17 @@ describe('Prompt contract', function () {
             const tokenId_big = ethers.BigNumber.from(tokenId);
             const tokens = [tokenId_1_big, tokenId_big];
             expect(await prompt.getContributedTokens(addr1.address)).to.eql(tokens);
+        });
+
+        it("get prompt minted", async function () {
+            const myPrompt = await prompt.getPrompt(tokenId);
+            console.log(myPrompt);
+
+            expect(myPrompt[0]).to.eql(addr5.address); // addr5 the new owner
+            expect(myPrompt[1]).to.gt(await blockTime()); //endsAt
+            expect(myPrompt[2]).to.eql(tokenURI); // tokenURI
+            expect(myPrompt[3]).to.eql(members); // deep equality check for arrays
+            // myPrompt[4] // contributions array
         });
     });
 });

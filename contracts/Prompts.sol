@@ -51,6 +51,7 @@ contract Prompts is ERC721URIStorage, Ownable {
 
     uint256 public memberLimit;
     uint256 public totalSupply;
+    uint256 public promptLimitPerMember;
     uint public mintCost;
     address payable feeAddress;
 
@@ -253,20 +254,24 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
 
     /// @notice Get prompt data
-    /// @return Returns (endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
+    /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
     function getPrompt(uint256 _tokenId) external view virtual
         returns (
+            address,
             uint256,
             string memory,
             address[] memory,
             Contribution[] memory
         )
     {
-        string memory tokenuri = "";
+        string memory tokenuri;
+        address owner;
         if (minted[_tokenId]) {
             tokenuri = tokenURI(_tokenId);
+            owner = ownerOf(_tokenId);
         }
         return(
+            owner,
             endsAt[_tokenId],
             tokenuri,
             members[_tokenId],
