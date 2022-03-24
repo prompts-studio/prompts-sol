@@ -5,7 +5,6 @@ import {
 import { ethers } from "hardhat"
 
 const main = async(): Promise<any> => {
-    // const [deployer] = await ethers.getSigners();
     const [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
     console.log("Deployer account:", owner.address);
     console.log("Account balance:", (await owner.getBalance()).toString());
