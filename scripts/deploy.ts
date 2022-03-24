@@ -14,12 +14,23 @@ const main = async(): Promise<any> => {
     const name = "Prompts";
     const symbol = "pNFT";
     const memberLimit = 3;
-    const supply = 120;
-    const mintFee = ethers.utils.parseUnits("0.001", "ether");
+    const totalSupply = 120;
+    const promptLimitPerAccount = 3;
+    const baseMintFee = ethers.utils.parseUnits("0.001", "ether");
+    const mintFee = 5;
     const feeAddress = "0x0249d0d547F5F4bb33790E04A503ae1c6822b8B6";
 
     const Prompt = await ethers.getContractFactory("Prompts");
-    const prompt = await Prompt.deploy(name, symbol, memberLimit, supply, mintFee, feeAddress);
+    const prompt = await Prompt.deploy(
+                    name,
+                    symbol,
+                    memberLimit,
+                    totalSupply,
+                    promptLimitPerAccount,
+                    baseMintFee,
+                    mintFee,
+                    feeAddress
+                );
     await prompt.deployed(); // waiting for the contract to be deployed
     console.log("Deployed contract address:", prompt.address);
 }

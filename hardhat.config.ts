@@ -52,8 +52,10 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const name = "Prompts";
   const symbol = "pNFT";
   const memberLimit = 3;
-  const supply = 120;
-  const mintCost = hre.ethers.utils.parseUnits("0.001", "ether");
+  const totalSupply = 120;
+  const promptLimitPerAccount = 3;
+  const baseMintFee = hre.ethers.utils.parseUnits("0.001", "ether");
+  const mintFee = 5;
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
@@ -62,8 +64,10 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
       name,
       symbol,
       memberLimit,
-      supply,
-      mintCost,
+      totalSupply,
+      promptLimitPerAccount,
+      baseMintFee,
+      mintFee,
       feeAddress
     ],
   });
