@@ -39,6 +39,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (uint256 => address) public reservedFor; // reservedFor[tokenId]
     mapping (uint256 => bool) public minted; // minted[tokenId]
     mapping (uint256 => address[]) public members; // members[tokenId]
+    mapping (address => uint256[]) public createdPrompts; // createdPrompts[address]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
     mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
     mapping (uint256 => Contribution[]) public contributions; // contributions[tokenId]
@@ -51,8 +52,9 @@ contract Prompts is ERC721URIStorage, Ownable {
 
     uint256 public memberLimit;
     uint256 public totalSupply;
-    uint256 public promptLimitPerMember;
-    uint public mintCost;
+    uint256 public promptLimitPerAccount;
+    uint256 public baseMintFee;
+    uint256 public mintFee;
     address payable feeAddress;
 
     /// ============ Constructor ============
@@ -62,14 +64,18 @@ contract Prompts is ERC721URIStorage, Ownable {
     /// @param tokenSymbol symbol of NFT
     /// @param _memberLimit member limit of each NFT
     /// @param _totalSupply total NFTs to mint
-    /// @param _mintCost in wei per NFT
-    /// @param _feeAddress where mint costs are paid
+    /// @param _promptLimitPerAccount max number of NFTs a member can create
+    /// @param _baseMintFee in wei per NFT
+    /// @param _mintFee in percentage per NFT
+    /// @param _feeAddress where mint fees are paid
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
         uint256 _memberLimit,
         uint256 _totalSupply,
-        uint256 _mintCost,
+        uint256 _promptLimitPerAccount,
+        uint256 _baseMintFee,
+        uint256 _mintFee,
         address _feeAddress
     ) ERC721(
         tokenName,
@@ -77,12 +83,15 @@ contract Prompts is ERC721URIStorage, Ownable {
     ) {
         require(_memberLimit >= 2, "_memberLimit cannot be smaller than 2");
         require(_totalSupply > 0, "_totalSupply cannot be 0");
-        require(_mintCost > 0, "_mintCost cannot be 0");
+        require(_baseMintFee > 0, "_mintFee cannot be 0");
+        require(_mintFee > 0, "_mintFee cannot be 0");
         require(_feeAddress != address(0), "feeAddress cannot be null address");
 
         memberLimit = _memberLimit;
         totalSupply = _totalSupply;
-        mintCost = _mintCost;
+        promptLimitPerAccount = _promptLimitPerAccount;
+        baseMintFee = _baseMintFee;
+        mintFee = _mintFee;
         feeAddress = payable(_feeAddress);
         allowlist[msg.sender] = true;
     }
@@ -100,6 +109,11 @@ contract Prompts is ERC721URIStorage, Ownable {
         }
         _;
     }
+    modifier canCreatePrompt() {
+        require (createdPrompts[msg.sender].length < promptLimitPerAccount,
+            'account reached prompt create limit');
+        _;
+    }
     modifier isNotEnded(uint256 _tokenId) {
         require(endsAt[_tokenId] >= block.timestamp,
                 'prompt has ended');
@@ -111,7 +125,8 @@ contract Prompts is ERC721URIStorage, Ownable {
         _;
     }
     modifier isNotEmpty(string memory _content) {
-        require(bytes(_content).length != 0, 'URI cannot be empty');
+        require(bytes(_content).length != 0,
+            'URI cannot be empty');
         _;
     }
     modifier memberNotContributed(uint256 _tokenId) {
@@ -134,13 +149,20 @@ contract Prompts is ERC721URIStorage, Ownable {
             'not all members contributed or prompt has not ended yet');
         _;
     }
+    modifier isNotMinted(uint _tokenId) {
+        require(minted[_tokenId] == false,
+            'prompt already minted');
+        _;
+    }
 
     /// ============ Functions ============
-    // address _to,
-    function createPrompt(uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
+
+    /// @notice Create prompt by generating the tokenID but without minting it
+    function createPrompt(address _reservedAddress, uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
         external
         isNotEmpty(_contributionURI)
         isAllowed()
+        canCreatePrompt()
     {
         require(_tokenIds.current() < totalSupply, "reached token supply limit");
         require(_members.length <= memberLimit, "reached member limit");
@@ -158,9 +180,11 @@ contract Prompts is ERC721URIStorage, Ownable {
 
         endsAt[newTokenId] = _endsAt;
 
-        // if (_to != address(0)) {
-        //     reservedFor[newTokenId] = _to;
-        // }
+        if (_reservedAddress != address(0)) {
+            reservedFor[newTokenId] = _reservedAddress;
+        }
+
+        createdPrompts[msg.sender].push(newTokenId);
 
         contributed[newTokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
         contributions[newTokenId].push(contributed[newTokenId][msg.sender]);
@@ -173,6 +197,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit PromptCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender);
     }
 
+    /// @notice msg.sender contributes to a prompt with tokenId, contribution URI and price
     function contribute(uint256 _tokenId, string memory _contributionURI, uint256 _contributionPrice)
         external
         isNotEnded(_tokenId)
@@ -187,16 +212,18 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Contributed(_tokenId, _contributionURI, msg.sender, _contributionPrice);
     }
 
+    /// @notice Contributor can set price of a contribution before it is minted
     function setPrice(uint256 _tokenId, uint256 _price)
         external
         memberContributed(_tokenId)
+        isNotMinted(_tokenId)
     {
         contributed[_tokenId][msg.sender].price = _price;
 
         emit PriceSet(_tokenId, msg.sender, _price);
     }
 
-    // add string[] memory _contributionURIs if contributionToken
+    /// @notice Mint the token to the msg.sender who pays the total price
     function mint(uint256 _tokenId, string memory _tokenURI)
         external
         payable
@@ -204,23 +231,26 @@ contract Prompts is ERC721URIStorage, Ownable {
         isNotEmpty(_tokenURI)
     {
         if (reservedFor[_tokenId] != address(0)) {
-            require(reservedFor[_tokenId] == msg.sender, "Mint is reserved");
+            require(reservedFor[_tokenId] == msg.sender, "Mint is reserved for another address");
         }
 
+        uint256 finalMintFee = baseMintFee;
         uint256 totalPrice = 0;
         for (uint256 i=0; i < contributions[_tokenId].length; i++) {
             totalPrice += contributions[_tokenId][i].price;
         }
-        // require(totalPrice > 0, "Price must be at least 1 wei");
-        require(msg.value == totalPrice + mintCost, "Payment must be equal to listing price + mint cost");
+        if (totalPrice > 0) {
+            finalMintFee = totalPrice * mintFee / 100;
+        }
+        require(msg.value == totalPrice + finalMintFee, "Payment must be equal to listing price + mint fee");
 
         for (uint256 i=0; i < contributions[_tokenId].length; i++) {
-            contributions[_tokenId][i].creator.transfer(contributions[_tokenId][i].price);
-            // require(bytes(_contributionURIs[i]).length != 0, "URI cannot be empty");
-            // contributions[_tokenId][i].contributionURI = _contributionURIs[i];
+            if (contributions[_tokenId][i].price > 0) {
+                contributions[_tokenId][i].creator.transfer(contributions[_tokenId][i].price);
+            }
         }
 
-        feeAddress.transfer(mintCost);
+        feeAddress.transfer(finalMintFee);
 
         _safeMint(msg.sender, _tokenId);
         _setTokenURI(_tokenId, _tokenURI);
@@ -249,6 +279,20 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributionCount[_tokenId] == memberLimit;
     }
 
+    /// @notice Check if account can create a new prompt
+    /// @return Returns true or false
+    function accountCanCreatePrompt(address _account) external view virtual returns (bool) {
+        return createdPrompts[_account].length <= promptLimitPerAccount;
+    }
+
+    /// @notice Get prompts created by an account
+    /// @return Returns promptIds
+    function promptCountByAccount(address _account)  external view virtual returns (uint256[] memory) {
+        return createdPrompts[_account];
+    }
+
+    /// @notice Get tokens contributed by an account
+    /// @return Returns tokenIds
     function getContributedTokens(address _account) external view virtual returns (uint256[] memory) {
         return contributedTokens[_account];
     }

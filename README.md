@@ -3,11 +3,11 @@
 Prompts is a Solidity smart contract extending ERC721 with empty minting, duration, and verified contributors. It enables NFTs for collective performances.
 
 A deployed Prompt contract enables the following:
-1. Mint an NFT by adding `endsAt`, `members`, and the first `contribution`mint)
-2. All members are added to the `allowlist`, only allowed addresses can mint
-3. NFT is minted empty and owned by the provided `to` address
-4. Members can add their contributions before the end time
-5. When the end time ends, any member can finalize the NFT
+1. Create a prompt by adding `endsAt`, `members`, and the first `contribution`
+2. All members are added to the `allowlist`, only allowed addresses can create prompt
+3. Members can add their contributions and set its price before the end time
+4. Contributors can set new price to their contributions
+5. When the end time ends or contributions complted, anyone can mint the NFT paying the total price
 
 Note that the contract deployer address is the first account in allowlist. So it should make the first mint and add others.
 
@@ -43,39 +43,6 @@ yarn
 3. Test (compiles and runs on local Hardhat network)
 ```sh
 yarn test
-
-  Prompt contract
-    Deployment
-      ✓ has a name
-      ✓ has a symbol
-      ✓ has an owner
-      ✓ has deployment parameters: memberLimit, totalSupply, mintCost, feeAddress
-    Prompt
-      ✓ deployer address in the allowlist
-      ✓ mints a token with endsAt, members, and first contribution
-      ✓ cannot mint if not in allowlist
-      ✓ can mint if in allowlist
-      ✓ owner contributed token 0
-      ✓ cannot mint if reached token supply limit
-      ✓ has token count
-      ✓ is an empty NFT
-      ✓ minter is the owner
-      ✓ has initially 3 members
-      ✓ owner can add a new member
-      ✓ cannot add member if limit is reached
-      ✓ has total 4 members
-      ✓ get prompt
-      ✓ a member can contribute
-      ✓ cannot finalize if not ended and not completed
-      ✓ cannot contribute and finalize if not the last contribution
-      ✓ a member cannot contribute more than once
-      ✓ another member can contribute
-      ✓ non-members are not allowed to contribute
-      ✓ last member can contribute and finalize at once
-      ✓ addr1 contributed token 1 and 0
-      ✓ is prompt completed?
-      ✓ any member can finalize
-      ✓ is a finalized NFT
 ```
 
 Note that `getPrompt(tokenId)` returns full prompt data:
@@ -142,10 +109,10 @@ yarn deploy --network mainnet
 Verify contract on Etherscan
 ```sh
 # Update .env with deployed contract address
-CONTRACT_ADDRESS=0xf723f0A323B6a412c13F8664Fe9948e5a71Ac6af
+CONTRACT_ADDRESS=0xd33d6649241384Feb47e88c9d46e602f88Dfaf61
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.ts 0xf723f0A323B6a412c13F8664Fe9948e5a71Ac6af --show-stack-traces
+npx hardhat verify --network ropsten --constructor-args arguments.ts 0xd33d6649241384Feb47e88c9d46e602f88Dfaf61 --show-stack-traces
 
 # Clear the cache and delete the artifacts if you have verification problems
 npx hardhat clean
