@@ -12,11 +12,11 @@ A deployed Prompt contract enables the following:
 Note that the contract deployer address is the first account in allowlist. So it should make the first mint and add others.
 
 [The Prompt app](https://github.com/arikan/prompts-app):
-1. Users connects their wallet
-2. Mint an empty NFT with the first contribution and the list of contributors (end time is set 24hrs from current blocktime by default)
-3. Users share the NFT link with contributors
-4. Contributors connect wallet and submit their contribution. The app uploads the image to IPFS, takes the contributionURI, and calls `contribute(tokenId, contributionURI)`
-5. After the end time reached, owner finalizes the NFT. The app compiles the latest contributions (one account can have multiple) together into a single JSON, uploads to IPFS, and gets the tokenID, and calls with a multisig address `fill(tokenId, tokenURI, to)`.
+1. Create a prompt with the first contribution and 2 contributor addreses
+2. Share the link with contributors
+3. Contributors submit their contribution.
+4. When prompt is completed (endTime reached or all contributions done) it becomes mintable.
+5. Anyone can mint the final NFT paying the total price, which is sent to creators
 
 ## Prerequisites
 
@@ -113,6 +113,11 @@ CONTRACT_ADDRESS=0xB8514815A3A0F3f6395155185C88F60ACaA5c366
 
 # Verify the contract on Etherscan
 npx hardhat verify --network ropsten --constructor-args arguments.ts 0xB8514815A3A0F3f6395155185C88F60ACaA5c366 --show-stack-traces
+
+# Verify the contract on Snowtrace
+CONTRACT_ADDRESS_FUJI=0x1594c71FE3f7Bb6ACeCD97e014986090589C57bD
+
+npx hardhat verify --network fuji --constructor-args arguments.ts 0x1594c71FE3f7Bb6ACeCD97e014986090589C57bD --show-stack-traces
 
 # Clear the cache and delete the artifacts if you get verification problems
 npx hardhat clean

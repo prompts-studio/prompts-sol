@@ -30,6 +30,7 @@ const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 // go to Account Details > Export Private Key
 // Be aware of NEVER putting real Ether into testing accounts
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
+const FUJI_PRIVATE_KEY = process.env.FUJI_PRIVATE_KEY;
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
@@ -59,7 +60,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.CONTRACT_ADDRESS, // Deployed contract address
+    address: process.env.CONTRACT_ADDRESS_FUJI, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
@@ -138,7 +139,7 @@ export default {
       url: 'https://api.avax-test.network/ext/bc/C/rpc',
       gasPrice: 225000000000,
       chainId: 43113,
-      accounts: []
+      accounts: [`${FUJI_PRIVATE_KEY}`]
     },
     mainnet: {
       url: 'https://api.avax.network/ext/bc/C/rpc',

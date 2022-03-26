@@ -3,9 +3,16 @@ import {
   ContractFactory
 } from "ethers"
 import { ethers } from "hardhat"
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const main = async(): Promise<any> => {
     const [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+
+    const accounts: SignerWithAddress[] = await ethers.getSigners()
+    accounts.forEach((account: SignerWithAddress): void => {
+        console.log(account.address)
+    })
+
     console.log("Deployer account:", owner.address);
     console.log("Account balance:", (await owner.getBalance()).toString());
 
