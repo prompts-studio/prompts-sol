@@ -282,7 +282,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     /// @notice Check if account can create a new prompt
     /// @return Returns true or false
     function accountCanCreatePrompt(address _account) external view virtual returns (bool) {
-        return createdPrompts[_account].length <= promptLimitPerAccount;
+        return createdPrompts[_account].length < promptLimitPerAccount;
     }
 
     /// @notice Get prompts created by an account
