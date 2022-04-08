@@ -25,7 +25,7 @@ const contributionURI_2 = "https://two...";
 const contributionPrice_0 = ethers.utils.parseUnits('0.25', 'ether');
 const contributionPrice_1 = ethers.utils.parseUnits('0.25', 'ether');
 const contributionPrice_2 = ethers.utils.parseUnits('0.25', 'ether');
-const contributionPrice_1_new = ethers.utils.parseUnits('0.5', 'ether');
+const contributionPrice_1_new = ethers.utils.parseUnits('0.7', 'ether');
 const contributionURIs = [contributionURI_0, contributionURI_1, contributionURI_2];
 
 let Prompt;
@@ -136,7 +136,7 @@ describe('Prompt contract', function () {
 
             expect(await prompt.createPrompt(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.emit(prompt, "PromptCreated")
-                .withArgs(tokenId, endsAt, members, contributionURI_0, contributionPrice_0, owner.address);
+                .withArgs(tokenId, endsAt, members, contributionURI_0, contributionPrice_0, owner.address, reservedAddress);
         });
 
         it("cannot create a prompt if the account reached the limit", async function () {
@@ -162,7 +162,7 @@ describe('Prompt contract', function () {
 
             expect(await prompt.connect(addr1).createPrompt(emptyReservedAddress, endsAt, members, contributionURI_1, contributionPrice_1))
                 .to.emit(prompt, "PromptCreated")
-                .withArgs(tokenId_1, endsAt, members, contributionURI_1, contributionPrice_1, addr1.address);
+                .withArgs(tokenId_1, endsAt, members, contributionURI_1, contributionPrice_1, addr1.address, emptyReservedAddress);
         });
 
         it("owner contributed token 0", async function () {

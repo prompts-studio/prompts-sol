@@ -16,7 +16,7 @@ contract Prompts is ERC721URIStorage, Ownable {
 
     /// ============ Events ============
 
-    event PromptCreated(uint256 tokenId, uint256 end, address[] members, string contributionURI, uint256 contributionPrice, address contributor);
+    event PromptCreated(uint256 tokenId, uint256 end, address[] members, string contributionURI, uint256 contributionPrice, address contributor, address reservedAddress);
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, string contributionURI, address creator, uint256 price);
     event PriceSet(uint256 tokenId, address contributor, uint256 price);
@@ -194,7 +194,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         // _safeMint(_to, newTokenId);
         _tokenIds.increment();
 
-        emit PromptCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender);
+        emit PromptCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
     }
 
     /// @notice msg.sender contributes to a prompt with tokenId, contribution URI and price
@@ -212,18 +212,19 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Contributed(_tokenId, _contributionURI, msg.sender, _contributionPrice);
     }
 
-    /// @notice Contributor can set price of a contribution before it is minted
+    /// @notice Contributor can set price of a contribution, if not yet minted
     function setPrice(uint256 _tokenId, uint256 _price)
         external
         memberContributed(_tokenId)
         isNotMinted(_tokenId)
     {
-        contributed[_tokenId][msg.sender].price = _price;
+        Contribution storage contribution = contributed[_tokenId][msg.sender];
+        contribution.price = _price;
 
-        emit PriceSet(_tokenId, msg.sender, _price);
+        emit PriceSet(_tokenId, msg.sender, contribution.price);
     }
 
-    /// @notice Mint the token to the msg.sender who pays the total price
+    /// @notice Anyone can mint paying the total
     function mint(uint256 _tokenId, string memory _tokenURI)
         external
         payable
@@ -298,14 +299,15 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
 
     /// @notice Get prompt data
-    /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[])
+    /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[], reserved: address)
     function getPrompt(uint256 _tokenId) external view virtual
         returns (
             address,
             uint256,
             string memory,
             address[] memory,
-            Contribution[] memory
+            Contribution[] memory,
+            address
         )
     {
         string memory tokenuri;
@@ -319,7 +321,8 @@ contract Prompts is ERC721URIStorage, Ownable {
             endsAt[_tokenId],
             tokenuri,
             members[_tokenId],
-            contributions[_tokenId]
+            contributions[_tokenId],
+            reservedFor[_tokenId]
         );
     }
 }
