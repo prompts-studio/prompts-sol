@@ -109,15 +109,14 @@ yarn deploy --network mainnet
 Verify contract on Etherscan
 ```sh
 # Update .env with deployed contract address
-CONTRACT_ADDRESS=0xB8514815A3A0F3f6395155185C88F60ACaA5c366
+CONTRACT_ADDRESS_ROPSTEN=0x56E3a83B6eaaD7168AFea9e073633243847f1D09
+CONTRACT_ADDRESS_FUJI=0x37de16466960419c7B6b54A94c89E826F5B8eedA
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.ts 0xB8514815A3A0F3f6395155185C88F60ACaA5c366 --show-stack-traces
+npx hardhat verify --network ropsten --constructor-args arguments.ts 0x56E3a83B6eaaD7168AFea9e073633243847f1D09 --show-stack-traces
 
 # Verify the contract on Snowtrace
-CONTRACT_ADDRESS_FUJI=0x1594c71FE3f7Bb6ACeCD97e014986090589C57bD
-
-npx hardhat verify --network fuji --constructor-args arguments.ts 0x1594c71FE3f7Bb6ACeCD97e014986090589C57bD --show-stack-traces
+npx hardhat verify --network fuji --constructor-args arguments.ts 0x37de16466960419c7B6b54A94c89E826F5B8eedA --show-stack-traces
 
 # Clear the cache and delete the artifacts if you get verification problems
 npx hardhat clean
