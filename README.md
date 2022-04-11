@@ -30,14 +30,17 @@ cd prompts-sol
 yarn
 ```
 
-3. Test (compiles and runs on local Hardhat network)
+3. Test
+
 ```sh
-yarn test
+yarn test # Compiles and runs on local Hardhat network
 ```
 
 ## Deployment
 
-### 1. Make sure you have a `.env` file in the project root directory:
+### 1. Configure
+
+Make sure you have a `.env` file in the project root directory:
 
 ```sh
 ALCHEMY_API_KEY=
@@ -84,10 +87,12 @@ npx hardhat verify --network ropsten --constructor-args arguments.ts 0x56E3a83B6
 # Verify the contract on Snowtrace
 npx hardhat verify --network fuji --constructor-args arguments.ts 0x37de16466960419c7B6b54A94c89E826F5B8eedA --show-stack-traces
 
-# Clear the cache and delete the artifacts if you get verification problems
+# Verification troubleshoot:
+
+# Clear the cache and delete the artifacts
 npx hardhat clean
 
-# make sure you have latest hardhat-etherscan plugin
+# Make sure you have latest hardhat-etherscan plugin
 yarn upgrade @nomiclabs/hardhat-etherscan --latest
 ```
 
