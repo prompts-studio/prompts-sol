@@ -61,11 +61,11 @@ Commands below run `scripts/deploy.ts` for picking the contracts to be deployed,
 # Deploy to local Hardhat network
 yarn deploy
 
-# Deploy to Ropsten testnet
-yarn deploy --network ropsten
-
 # Deploy to Avalanche local network (run Avash https://docs.avax.network/build/tools/avash)
 yarn deploy --network local
+
+# Deploy to Ropsten testnet
+yarn deploy --network ropsten
 
 # Deploy to Avalanche testnet Fuji
 yarn deploy --network fuji
@@ -78,14 +78,14 @@ yarn deploy --network mainnet
 
 ```sh
 # Update .env with deployed contract address
-CONTRACT_ADDRESS_ROPSTEN=0x56E3a83B6eaaD7168AFea9e073633243847f1D09
-CONTRACT_ADDRESS_FUJI=0x37de16466960419c7B6b54A94c89E826F5B8eedA
+CONTRACT_ADDRESS_ROPSTEN=0xcB93fA84d40C689CB9a6EB8f16038D4e07104618
+CONTRACT_ADDRESS_FUJI=0xcC6E41851e29Bf8fc8D9fca4Ca0A7703975805fF
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.ts 0x56E3a83B6eaaD7168AFea9e073633243847f1D09 --show-stack-traces
+npx hardhat verify --network ropsten --constructor-args arguments.ts 0xcB93fA84d40C689CB9a6EB8f16038D4e07104618 --show-stack-traces
 
 # Verify the contract on Snowtrace
-npx hardhat verify --network fuji --constructor-args arguments.ts 0x37de16466960419c7B6b54A94c89E826F5B8eedA --show-stack-traces
+npx hardhat verify --network fuji --constructor-args arguments.ts 0xcC6E41851e29Bf8fc8D9fca4Ca0A7703975805fF --show-stack-traces
 
 # Verification troubleshoot:
 
