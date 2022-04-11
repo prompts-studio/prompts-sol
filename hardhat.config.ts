@@ -60,7 +60,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.CONTRACT_ADDRESS_FUJI, // Deployed contract address
+    address: process.env.FUJI_CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
@@ -78,7 +78,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
 // task("verify", "Verifies the contract on Snowtrace", async (args, hre): Promise<void> => {
 //   const name = "Waltz";
 //   await hre.run("verify:verify", {
-//     address: process.env.CONTRACT_ADDRESS_FUJI, // Deployed contract address
+//     address: process.env.FUJI_CONTRACT_ADDRESS, // Deployed contract address
 //     constructorArguments: [],
 //   });
 // })

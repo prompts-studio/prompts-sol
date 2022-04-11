@@ -1,28 +1,18 @@
 ## Introduction
 
-Prompts is a Solidity smart contract extending ERC721 with empty minting, duration, and verified contributors. It enables NFTs for collective performances.
+Prompts Solidity smart contract extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship.
 
-A deployed Prompt contract enables the following:
-1. Create a prompt by adding `endsAt`, `members`, and the first `contribution`
-2. All members are added to the `allowlist`, only allowed addresses can create prompt
-3. Members can add their contributions and set its price before the end time
-4. Contributors can set new price to their contributions
-5. When the end time ends or contributions complted, anyone can mint the NFT paying the total price
+In the Prompts contract, every session is a group performance that generates a jointly-owned artifact in the form of an NFT. These event derivatives may then be carried into future sessions, traded and remixed to build up a referential conversation among successive prompt participants.
 
-Note that the contract deployer address is the first account in allowlist. So it should make the first mint and add others.
+Prompt contracts include several deployment parameters, duration, max supply, creation limit per account, as well as an allowlist function, which controls who can initiate a session and how collaborators may be added.
 
-[The Prompt app](https://github.com/arikan/prompts-app):
-1. Create a prompt with the first contribution and 2 contributor addreses
-2. Share the link with contributors
-3. Contributors submit their contribution.
-4. When prompt is completed (endTime reached or all contributions done) it becomes mintable.
-5. Anyone can mint the final NFT paying the total price, which is sent to creators
+The contract deployer is the first address in the `allowlist`. So, it should invite other addresses by adding them as contributors to prompt sessions.
 
 ## Prerequisites
 
 1. Install the long-term support version of [nodejs](https://nodejs.org/en) (`16.10.0` at the time of writing).
 
-1. Install [yarn](https://yarnpkg.com):
+2. Install [yarn](https://yarnpkg.com):
 ```sh
 npm install -g yarn
 ```
@@ -45,47 +35,22 @@ yarn
 yarn test
 ```
 
-Note that `getPrompt(tokenId)` returns full prompt data:
-- `address` owner
-- `blocktime` endsAt
-- `string` tokenURI
-- `address[]` members
-- `Contribution[]` contributions
-```js
-[
-  '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-  BigNumber { _hex: '0x61f354b9', _isBigNumber: true },
-  '',
-  [
-    '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-    '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-    '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
-    '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
-  ],
-  [
-    [
-      'https://zero...',
-      [BigNumber],
-      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-      contributionURI: 'https://zero...',
-      createdAt: [BigNumber],
-      creator: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    ]
-  ]
-]s
-```
-
 ## Deployment
 
-Make sure you have a `.env` file in the project root directory:
+### 1. Make sure you have a `.env` file in the project root directory:
 
 ```sh
-ETHERSCAN_KEY=
 ALCHEMY_API_KEY=
-ROPSTEN_PRIVATE_KEY=
+ETHERSCAN_KEY=
+SNOWTRACE_KEY=
 FEE_ADDRESS=
-CONTRACT_ADDRESS=
+ROPSTEN_PRIVATE_KEY=
+FUJI_PRIVATE_KEY=
+ROPSTEN_CONTRACT_ADDRESS=
+FUJI_CONTRACT_ADDRESS=
 ```
+
+### 2. Deploy
 
 Commands below run `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
 
@@ -106,7 +71,8 @@ yarn deploy --network fuji
 yarn deploy --network mainnet
 ```
 
-Verify contract on Etherscan
+### 3. Verify contract on Explorer (Etherscan, Snowtrace)
+
 ```sh
 # Update .env with deployed contract address
 CONTRACT_ADDRESS_ROPSTEN=0x56E3a83B6eaaD7168AFea9e073633243847f1D09
@@ -125,7 +91,9 @@ npx hardhat clean
 yarn upgrade @nomiclabs/hardhat-etherscan --latest
 ```
 
-## Interact with Smart Contract
+## Development
+
+### Interact with Smart Contract
 
 [Hardhat has built-in interactive JS console](https://hardhat.org/guides/hardhat-console.html#using-the-hardhat-console) to interact with the smart contract manually.
 
@@ -167,7 +135,7 @@ await prompt.getContributions(tokenId)
 await prompt.fill(account[1], tokenId, 'https://finalTokenURI...')
 ```
 
-## Explore the code
+### Explore the code
 
 View `contracts/prompts.sol` for the prompts contract.
 
@@ -189,14 +157,14 @@ yarn hardhat
 yarn compile
 ```
 
-## Hardhat Config
+### Hardhat Config
 
 Hardhat uses `hardhat.config.js` as the configuration file. You can define tasks, networks, compilers and more in that file. For more information see [here](https://hardhat.org/config/).
 
 In our repository we use a pre-configured file `hardhat.config.ts`. This file configures necessary network information to provide smooth interaction with local network as well as Avalanche testnet and mainnet. There are also some pre-defined private keys for testing on a local test network.
 
 
-## Efficiency and Security
+### Efficiency and Security
 
 - We use [Hardhat Gas Reporter plugin](https://hardhat.org/plugins/hardhat-gas-reporter.html), which uses [Eth Gas Reporter](https://hardhat.org/plugins/hardhat-gas-reporter.html)
 
