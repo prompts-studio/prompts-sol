@@ -297,7 +297,7 @@ describe('Prompt contract', function () {
         });
 
         it("anyone can mint if prompt is completed and does not have reservedAddress", async function () {
-            const total = await calculatePayment(tokenId);
+            const total = await calculatePayment(tokenId_1);
             const someoneReserved = await prompt.connect(addr7);
 
             expect(await someoneReserved.mint(tokenId_1, tokenURI, {value: total}))

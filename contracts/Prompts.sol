@@ -10,7 +10,7 @@ import "hardhat/console.sol";
 
 /// @title Prompts
 /// @author Burak Arıkan & Sam Hart
-/// @notice extends ERC721 with collective creation and verified contributions
+/// @notice extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
 contract Prompts is ERC721URIStorage, Ownable {
 
@@ -42,7 +42,6 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (address => uint256[]) public createdPrompts; // createdPrompts[address]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
     mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
-    mapping (uint256 => Contribution[]) public contributions; // contributions[tokenId]
     mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
     mapping (uint256 => mapping (address => Contribution)) public contributed; // contributed[tokenId][address]
     mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
@@ -187,11 +186,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         createdPrompts[msg.sender].push(newTokenId);
 
         contributed[newTokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
-        contributions[newTokenId].push(contributed[newTokenId][msg.sender]);
         contributedTokens[msg.sender].push(newTokenId);
         contributionCount[newTokenId]++;
 
-        // _safeMint(_to, newTokenId);
+        // _safeMint(_to, newTokenId); // Skip minting
         _tokenIds.increment();
 
         emit PromptCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
@@ -205,7 +203,6 @@ contract Prompts is ERC721URIStorage, Ownable {
         memberNotContributed(_tokenId)
     {
         contributed[_tokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
-        contributions[_tokenId].push(contributed[_tokenId][msg.sender]);
         contributedTokens[msg.sender].push(_tokenId);
         contributionCount[_tokenId]++;
 
@@ -218,10 +215,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         memberContributed(_tokenId)
         isNotMinted(_tokenId)
     {
-        Contribution storage contribution = contributed[_tokenId][msg.sender];
-        contribution.price = _price;
+        Contribution storage _contribution = contributed[_tokenId][msg.sender];
+        _contribution.price = _price;
 
-        emit PriceSet(_tokenId, msg.sender, contribution.price);
+        emit PriceSet(_tokenId, msg.sender, _contribution.price);
     }
 
     /// @notice Anyone can mint paying the total
@@ -237,17 +234,20 @@ contract Prompts is ERC721URIStorage, Ownable {
 
         uint256 finalMintFee = baseMintFee;
         uint256 totalPrice = 0;
-        for (uint256 i=0; i < contributions[_tokenId].length; i++) {
-            totalPrice += contributions[_tokenId][i].price;
+
+        Contribution[] memory contributions = getContributions(_tokenId);
+
+        for (uint256 i=0; i < contributions.length; i++) {
+            totalPrice += contributions[i].price;
         }
         if (totalPrice > 0) {
             finalMintFee = totalPrice * mintFee / 100;
         }
         require(msg.value == totalPrice + finalMintFee, "Payment must be equal to listing price + mint fee");
 
-        for (uint256 i=0; i < contributions[_tokenId].length; i++) {
-            if (contributions[_tokenId][i].price > 0) {
-                contributions[_tokenId][i].creator.transfer(contributions[_tokenId][i].price);
+        for (uint256 i=0; i < contributions.length; i++) {
+            if (contributions[i].price > 0) {
+                contributions[i].creator.transfer(contributions[i].price);
             }
         }
 
@@ -260,7 +260,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         emit Minted(_tokenId, _tokenURI, msg.sender);
     }
 
-    /// ============ Read-only funtions ============
+    /// ============ Read-only functions ============
 
     /// @notice Get current count of minted tokens
     /// @return Returns number
@@ -298,6 +298,16 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributedTokens[_account];
     }
 
+    /// @notice Get contributions of a token
+    /// @return Returns contributions
+    function getContributions(uint256 _tokenId) internal view returns (Contribution[] memory) {
+        Contribution[] memory contributions_arr = new Contribution[](members[_tokenId].length);
+        for (uint256 i=0; i < members[_tokenId].length; i++) {
+            contributions_arr[i] = (contributed[_tokenId][members[_tokenId][i]]);
+        }
+        return contributions_arr;
+    }
+
     /// @notice Get prompt data
     /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[], reserved: address)
     function getPrompt(uint256 _tokenId) external view virtual
@@ -321,7 +331,7 @@ contract Prompts is ERC721URIStorage, Ownable {
             endsAt[_tokenId],
             tokenuri,
             members[_tokenId],
-            contributions[_tokenId],
+            getContributions(_tokenId),
             reservedFor[_tokenId]
         );
     }
