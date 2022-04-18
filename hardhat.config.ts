@@ -50,11 +50,11 @@ task("balances", "Prints the list of AVAX account balances", async (args, hre): 
 })
 
 task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<void> => {
-  const name = "Prompts";
+  const name = "Prompt";
   const symbol = "pNFT";
   const memberLimit = 3;
   const totalSupply = 120;
-  const promptLimitPerAccount = 3;
+  const sessionLimitPerAccount = 3;
   const baseMintFee = hre.ethers.utils.parseUnits("0.001", "ether");
   const mintFee = 5;
   const feeAddress = process.env.FEE_ADDRESS;
@@ -66,22 +66,13 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
       symbol,
       memberLimit,
       totalSupply,
-      promptLimitPerAccount,
+      sessionLimitPerAccount,
       baseMintFee,
       mintFee,
       feeAddress
     ],
   });
 })
-
-
-// task("verify", "Verifies the contract on Snowtrace", async (args, hre): Promise<void> => {
-//   const name = "Waltz";
-//   await hre.run("verify:verify", {
-//     address: process.env.FUJI_CONTRACT_ADDRESS, // Deployed contract address
-//     constructorArguments: [],
-//   });
-// })
 
 export default {
   solidity: {

@@ -8,15 +8,15 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 import "hardhat/console.sol";
 
-/// @title Prompts
+/// @title Prompt
 /// @author Burak Arıkan & Sam Hart
 /// @notice extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
-contract Prompts is ERC721URIStorage, Ownable {
+contract Prompt is ERC721URIStorage, Ownable {
 
     /// ============ Events ============
 
-    event PromptCreated(uint256 tokenId, uint256 end, address[] members, string contributionURI, uint256 contributionPrice, address contributor, address reservedAddress);
+    event SessionCreated(uint256 tokenId, uint256 end, address[] members, string contributionURI, uint256 contributionPrice, address contributor, address reservedAddress);
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, string contributionURI, address creator, uint256 price);
     event PriceSet(uint256 tokenId, address contributor, uint256 price);
@@ -39,7 +39,7 @@ contract Prompts is ERC721URIStorage, Ownable {
     mapping (uint256 => address) public reservedFor; // reservedFor[tokenId]
     mapping (uint256 => bool) public minted; // minted[tokenId]
     mapping (uint256 => address[]) public members; // members[tokenId]
-    mapping (address => uint256[]) public createdPrompts; // createdPrompts[address]
+    mapping (address => uint256[]) public createdSessions; // createdSessions[address]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
     mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
     mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
@@ -51,19 +51,19 @@ contract Prompts is ERC721URIStorage, Ownable {
 
     uint256 public memberLimit;
     uint256 public totalSupply;
-    uint256 public promptLimitPerAccount;
+    uint256 public sessionLimitPerAccount;
     uint256 public baseMintFee;
     uint256 public mintFee;
     address payable feeAddress;
 
     /// ============ Constructor ============
 
-    /// @notice Creates a new Prompts NFT contract
+    /// @notice Creates a new Prompt NFT contract
     /// @param tokenName name of NFT
     /// @param tokenSymbol symbol of NFT
     /// @param _memberLimit member limit of each NFT
     /// @param _totalSupply total NFTs to mint
-    /// @param _promptLimitPerAccount max number of NFTs a member can create
+    /// @param _sessionLimitPerAccount max number of NFTs a member can create
     /// @param _baseMintFee in wei per NFT
     /// @param _mintFee in percentage per NFT
     /// @param _feeAddress where mint fees are paid
@@ -72,7 +72,7 @@ contract Prompts is ERC721URIStorage, Ownable {
         string memory tokenSymbol,
         uint256 _memberLimit,
         uint256 _totalSupply,
-        uint256 _promptLimitPerAccount,
+        uint256 _sessionLimitPerAccount,
         uint256 _baseMintFee,
         uint256 _mintFee,
         address _feeAddress
@@ -88,7 +88,7 @@ contract Prompts is ERC721URIStorage, Ownable {
 
         memberLimit = _memberLimit;
         totalSupply = _totalSupply;
-        promptLimitPerAccount = _promptLimitPerAccount;
+        sessionLimitPerAccount = _sessionLimitPerAccount;
         baseMintFee = _baseMintFee;
         mintFee = _mintFee;
         feeAddress = payable(_feeAddress);
@@ -104,23 +104,23 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
     modifier onlyMemberOf(uint256 _tokenId) {
         if (membership[_tokenId][msg.sender] == false) {
-            revert('not a prompt member');
+            revert('not a session member');
         }
         _;
     }
-    modifier canCreatePrompt() {
-        require (createdPrompts[msg.sender].length < promptLimitPerAccount,
-            'account reached prompt create limit');
+    modifier canCreateSession() {
+        require (createdSessions[msg.sender].length < sessionLimitPerAccount,
+            'account reached session limit');
         _;
     }
     modifier isNotEnded(uint256 _tokenId) {
         require(endsAt[_tokenId] >= block.timestamp,
-                'prompt has ended');
+                'session has ended');
         _;
     }
     modifier isEnded(uint256 _tokenId) {
         require(endsAt[_tokenId] <= block.timestamp,
-                'prompt has not ended yet');
+                'session has not ended yet');
         _;
     }
     modifier isNotEmpty(string memory _content) {
@@ -145,23 +145,23 @@ contract Prompts is ERC721URIStorage, Ownable {
     }
     modifier finalizable(uint _tokenId) {
         require(contributionCount[_tokenId] == memberLimit || (endsAt[_tokenId] != 0 && endsAt[_tokenId] <= block.timestamp),
-            'not all members contributed or prompt has not ended yet');
+            'not all members contributed or session has not ended yet');
         _;
     }
     modifier isNotMinted(uint _tokenId) {
         require(minted[_tokenId] == false,
-            'prompt already minted');
+            'session already minted');
         _;
     }
 
     /// ============ Functions ============
 
-    /// @notice Create prompt by generating the tokenID but without minting it
-    function createPrompt(address _reservedAddress, uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
+    /// @notice Create a session with tokenID but without minting
+    function createSession(address _reservedAddress, uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
         external
         isNotEmpty(_contributionURI)
         isAllowed()
-        canCreatePrompt()
+        canCreateSession()
     {
         require(_tokenIds.current() < totalSupply, "reached token supply limit");
         require(_members.length <= memberLimit, "reached member limit");
@@ -170,7 +170,7 @@ contract Prompts is ERC721URIStorage, Ownable {
 
         for (uint256 i=0; i < _members.length; i++) {
             require(_members[i] != address(0), 'address cannot be null address');
-            require(!membership[newTokenId][_members[i]], 'address is already a member of prompt');
+            require(!membership[newTokenId][_members[i]], 'address is already a member of session');
             membership[newTokenId][_members[i]] = true;
             memberCount[newTokenId]++;
             members[newTokenId].push(_members[i]);
@@ -183,7 +183,7 @@ contract Prompts is ERC721URIStorage, Ownable {
             reservedFor[newTokenId] = _reservedAddress;
         }
 
-        createdPrompts[msg.sender].push(newTokenId);
+        createdSessions[msg.sender].push(newTokenId);
 
         contributed[newTokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
         contributedTokens[msg.sender].push(newTokenId);
@@ -192,10 +192,10 @@ contract Prompts is ERC721URIStorage, Ownable {
         // _safeMint(_to, newTokenId); // Skip minting
         _tokenIds.increment();
 
-        emit PromptCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
+        emit SessionCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
     }
 
-    /// @notice msg.sender contributes to a prompt with tokenId, contribution URI and price
+    /// @notice msg.sender contributes to a session with tokenId, contribution URI and price
     function contribute(uint256 _tokenId, string memory _contributionURI, uint256 _contributionPrice)
         external
         isNotEnded(_tokenId)
@@ -268,28 +268,28 @@ contract Prompts is ERC721URIStorage, Ownable {
         return _tokenIds.current();
     }
 
-    /// @notice Check if an address is member of a prompt
+    /// @notice Check if an address is member of a session
     /// @return Returns true or false
     function isMember(uint256 _tokenId, address _account) external view virtual returns (bool) {
         return membership[_tokenId][_account];
     }
 
-    /// @notice Check if all prompt members contributed
+    /// @notice Check if all session members contributed
     /// @return Returns true or false
     function isCompleted(uint256 _tokenId) external view virtual returns (bool) {
         return contributionCount[_tokenId] == memberLimit;
     }
 
-    /// @notice Check if account can create a new prompt
+    /// @notice Check if account can create a new session
     /// @return Returns true or false
-    function accountCanCreatePrompt(address _account) external view virtual returns (bool) {
-        return createdPrompts[_account].length < promptLimitPerAccount;
+    function accountCanCreateSession(address _account) external view virtual returns (bool) {
+        return createdSessions[_account].length < sessionLimitPerAccount;
     }
 
-    /// @notice Get prompts created by an account
-    /// @return Returns promptIds
-    function promptCountByAccount(address _account)  external view virtual returns (uint256[] memory) {
-        return createdPrompts[_account];
+    /// @notice Get sessions initiated by an account
+    /// @return Returns tokenIds
+    function sessionCountByAccount(address _account)  external view virtual returns (uint256[] memory) {
+        return createdSessions[_account];
     }
 
     /// @notice Get tokens contributed by an account
@@ -308,9 +308,9 @@ contract Prompts is ERC721URIStorage, Ownable {
         return contributions_arr;
     }
 
-    /// @notice Get prompt data
+    /// @notice Get session data
     /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[], reserved: address)
-    function getPrompt(uint256 _tokenId) external view virtual
+    function getSession(uint256 _tokenId) external view virtual
         returns (
             address,
             uint256,

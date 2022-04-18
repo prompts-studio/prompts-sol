@@ -1,16 +1,11 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-// const {
-//     constants,
-//     BN,
-// } = require('@openzeppelin/test-helpers');
-// const { ZERO_ADDRESS } = constants;
 
-const name = 'Prompts';
-const symbol = 'PNFT';
+const name = 'Prompt';
+const symbol = 'pNFT';
 const memberLimit = 3;
 const totalSupply = 2;
-const promptLimitPerAccount = 1;
+const sessionLimitPerAccount = 1;
 const mintFee = 5; // percent
 const baseMintFee = ethers.utils.parseUnits('0.01', 'ether');
 
@@ -18,7 +13,7 @@ const tokenId = 0;
 const tokenId_1 = 1;
 const tokenURI = "https://...";
 
-const promptDuration = 86400; // 24 hrs
+const duration = 86400; // 24 hrs
 const contributionURI_0 = "https://zero...";
 const contributionURI_1 = "https://one...";
 const contributionURI_2 = "https://two...";
@@ -59,8 +54,8 @@ async function moveForward(duration) {
     return true
 }
 async function calculatePayment(tokenId) {
-    const myPrompt = await prompt.getPrompt(tokenId);
-    const contributions = myPrompt[4];
+    const mySession = await prompt.getSession(tokenId);
+    const contributions = mySession[4];
 
     let totalPrice = ethers.BigNumber.from(0);
     let finalMintFee = ethers.BigNumber.from(await prompt.baseMintFee());
@@ -93,7 +88,7 @@ describe('Prompt contract', function () {
                     symbol,
                     memberLimit,
                     totalSupply,
-                    promptLimitPerAccount,
+                    sessionLimitPerAccount,
                     baseMintFee,
                     mintFee,
                     feeAddress
@@ -117,7 +112,7 @@ describe('Prompt contract', function () {
         it("has deployment parameters: memberLimit, totalSupply, baseMintFee, mintFee, feeAddress", async function () {
             expect(await prompt.memberLimit()).to.equal(memberLimit);
             expect(await prompt.totalSupply()).to.equal(totalSupply);
-            expect(await prompt.promptLimitPerAccount()).to.equal(promptLimitPerAccount);
+            expect(await prompt.sessionLimitPerAccount()).to.equal(sessionLimitPerAccount);
             expect(await prompt.baseMintFee()).to.equal(baseMintFee);
             expect(await prompt.mintFee()).to.equal(mintFee);
             // expect(await prompt.feeAddress()).to.equal(owner.address);
@@ -130,38 +125,38 @@ describe('Prompt contract', function () {
             expect(await prompt.allowlist(owner.address)).to.equal(true);
         });
 
-        it("creates prompt with reservedAddress, endsAt, members, first contribution, and price", async function () {
+        it("creates session with reservedAddress, endsAt, members, first contribution, and price", async function () {
             const blocktime = await blockTime();
-            const endsAt = blocktime + promptDuration;
+            const endsAt = blocktime + duration;
 
-            expect(await prompt.createPrompt(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
-                .to.emit(prompt, "PromptCreated")
+            expect(await prompt.createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
+                .to.emit(prompt, "SessionCreated")
                 .withArgs(tokenId, endsAt, members, contributionURI_0, contributionPrice_0, owner.address, reservedAddress);
         });
 
-        it("cannot create a prompt if the account reached the limit", async function () {
+        it("cannot create a session if the account reached the limit", async function () {
             const blocktime = await blockTime();
-            const endsAt = blocktime + promptDuration;
+            const endsAt = blocktime + duration;
 
-            await expect(prompt.createPrompt(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
+            await expect(prompt.createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.be.reverted;
         });
 
-        it("cannot create prompt if in the allowlist", async function () {
+        it("cannot create session if in the allowlist", async function () {
             const blocktime = await blockTime();
-            const endsAt = blocktime + promptDuration;
+            const endsAt = blocktime + duration;
 
-            await expect(prompt.connect(addr6).createPrompt(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
+            await expect(prompt.connect(addr6).createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.be.reverted;
         });
 
-        it("can create prompt (without reserverAddress) if in the allowlist", async function () {
+        it("can create session (without reserverAddress) if in the allowlist", async function () {
             const blocktime = await blockTime();
-            const endsAt = blocktime + promptDuration;
+            const endsAt = blocktime + duration;
             const emptyReservedAddress = "0x0000000000000000000000000000000000000000";
 
-            expect(await prompt.connect(addr1).createPrompt(emptyReservedAddress, endsAt, members, contributionURI_1, contributionPrice_1))
-                .to.emit(prompt, "PromptCreated")
+            expect(await prompt.connect(addr1).createSession(emptyReservedAddress, endsAt, members, contributionURI_1, contributionPrice_1))
+                .to.emit(prompt, "SessionCreated")
                 .withArgs(tokenId_1, endsAt, members, contributionURI_1, contributionPrice_1, addr1.address, emptyReservedAddress);
         });
 
@@ -171,11 +166,11 @@ describe('Prompt contract', function () {
             expect(await prompt.getContributedTokens(owner.address)).to.eql(tokens);
         });
 
-        it("cannot create prompt if reached supply limit", async function () {
+        it("cannot create session if reached supply limit", async function () {
             const blocktime = await blockTime();
-            const endsAt = blocktime + promptDuration;
+            const endsAt = blocktime + duration;
 
-            await expect(prompt.connect(addr2).createPrompt(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
+            await expect(prompt.connect(addr2).createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.be.revertedWith('reached token supply limit');
         });
 
@@ -240,18 +235,17 @@ describe('Prompt contract', function () {
                 .withArgs(tokenId, contributionURI_2, addr2.address, contributionPrice_2);
         });
 
-        it("get a prompt that is not yet minted ", async function () {
-            const myPrompt = await prompt.getPrompt(tokenId);
-            // console.log(myPrompt);
+        it("get a session that is not yet minted ", async function () {
+            const mySession = await prompt.getSession(tokenId);
 
-            expect(myPrompt[0]).to.eql("0x0000000000000000000000000000000000000000"); // owner, not yet minted
-            expect(myPrompt[1]).to.gt(await blockTime()); //endsAt
-            expect(myPrompt[2]).to.eql(''); // tokenURI, not yet minted
-            expect(myPrompt[3]).to.eql(members); // deep equality check for arrays
-            // myPrompt[4] // contributions array
+            expect(mySession[0]).to.eql("0x0000000000000000000000000000000000000000"); // owner, not yet minted
+            expect(mySession[1]).to.gt(await blockTime()); //endsAt
+            expect(mySession[2]).to.eql(''); // tokenURI, not yet minted
+            expect(mySession[3]).to.eql(members); // deep equality check for arrays
+            // mySession[4] // contributions array
         });
 
-        it("is prompt completed?", async function () {
+        it("is session completed?", async function () {
             const isCompleted = await prompt.isCompleted(tokenId);
             // const memberCount = await prompt.memberCount(tokenId);
             // console.log('isCompleted', isCompleted);
@@ -267,7 +261,7 @@ describe('Prompt contract', function () {
                 .to.be.reverted;
         });
 
-        it("can mint if reservedAddress and prompt completed", async function () {
+        it("can mint if reservedAddress and session completed", async function () {
             const total = await calculatePayment(tokenId);
             const buyerReserved = await prompt.connect(addr5);
 
@@ -282,21 +276,21 @@ describe('Prompt contract', function () {
                 .to.be.reverted;
         });
 
-        it("a member can contribute to the second prompt", async function () {
+        it("a member can contribute to the second session", async function () {
             const member = await prompt.connect(owner);
             await expect(member.contribute(tokenId_1, contributionURI_1, contributionPrice_1))
                 .to.emit(prompt, "Contributed")
                 .withArgs(tokenId_1, contributionURI_1, owner.address, contributionPrice_1);
         });
 
-        it("another member can contribute to the second prompt", async function () {
+        it("another member can contribute to the second session", async function () {
             const member = await prompt.connect(addr2);
             await expect(member.contribute(tokenId_1, contributionURI_2, contributionPrice_2))
                 .to.emit(prompt, "Contributed")
                 .withArgs(tokenId_1, contributionURI_2, addr2.address, contributionPrice_2);
         });
 
-        it("anyone can mint if prompt is completed and does not have reservedAddress", async function () {
+        it("anyone can mint if session is completed and does not have reservedAddress", async function () {
             const total = await calculatePayment(tokenId_1);
             const someoneReserved = await prompt.connect(addr7);
 
@@ -325,12 +319,12 @@ describe('Prompt contract', function () {
             console.log(addr6.address, ethers.utils.formatEther(addr6Balance));
         });
 
-        it("buyer is the owner for reserved prompt", async function () {
+        it("buyer is the owner for reserved session", async function () {
             let nftOwner = await prompt.ownerOf(tokenId);
             expect(nftOwner).to.equal(addr5.address);
         });
 
-        it("buyer is the owner for non reserved prompt", async function () {
+        it("buyer is the owner for non-reserved session", async function () {
             let nftOwner = await prompt.ownerOf(tokenId_1);
             expect(nftOwner).to.equal(addr7.address);
         });
@@ -343,15 +337,15 @@ describe('Prompt contract', function () {
             expect(await prompt.getContributedTokens(addr1.address)).to.eql(tokens);
         });
 
-        it("get a prompt that is minted", async function () {
-            const myPrompt = await prompt.getPrompt(tokenId);
-            console.log(myPrompt);
+        it("get a session that is minted", async function () {
+            const mySession = await prompt.getSession(tokenId);
+            console.log(mySession);
 
-            expect(myPrompt[0]).to.eql(addr5.address); // addr5 the new owner
-            expect(myPrompt[1]).to.gt(await blockTime()); //endsAt
-            expect(myPrompt[2]).to.eql(tokenURI); // tokenURI
-            expect(myPrompt[3]).to.eql(members); // deep equality check for arrays
-            // myPrompt[4] // contributions array
+            expect(mySession[0]).to.eql(addr5.address); // addr5 the new owner
+            expect(mySession[1]).to.gt(await blockTime()); //endsAt
+            expect(mySession[2]).to.eql(tokenURI); // tokenURI
+            expect(mySession[3]).to.eql(members); // deep equality check for arrays
+            // mySession[4] // contributions array
         });
     });
 });

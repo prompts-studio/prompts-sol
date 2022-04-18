@@ -78,14 +78,14 @@ yarn deploy --network mainnet
 
 ```sh
 # Update .env with deployed contract address
-CONTRACT_ADDRESS_ROPSTEN=0xcB93fA84d40C689CB9a6EB8f16038D4e07104618
-CONTRACT_ADDRESS_FUJI=0xcC6E41851e29Bf8fc8D9fca4Ca0A7703975805fF
+CONTRACT_ADDRESS_ROPSTEN=0x3d60c48bf526F4F74567C79d178BD58016f55F49
+CONTRACT_ADDRESS_FUJI=0xeC3fCb985FD2F95F4a54b8d97889Ac2AA68Cbd88
 
 # Verify the contract on Etherscan
-npx hardhat verify --network ropsten --constructor-args arguments.ts 0xcB93fA84d40C689CB9a6EB8f16038D4e07104618 --show-stack-traces
+npx hardhat verify --network ropsten --constructor-args arguments.ts 0x3d60c48bf526F4F74567C79d178BD58016f55F49 --show-stack-traces
 
 # Verify the contract on Snowtrace
-npx hardhat verify --network fuji --constructor-args arguments.ts 0xcC6E41851e29Bf8fc8D9fca4Ca0A7703975805fF --show-stack-traces
+npx hardhat verify --network fuji --constructor-args arguments.ts 0xeC3fCb985FD2F95F4a54b8d97889Ac2AA68Cbd88 --show-stack-traces
 
 # Verification troubleshoot:
 

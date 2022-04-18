@@ -1,5 +1,5 @@
 module.exports = [
-    "Prompts",
+    "Prompt",
     "pNFT",
     3,
     120,
