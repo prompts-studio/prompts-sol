@@ -2,16 +2,14 @@
 pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
 
 /// @title Prompt
 /// @author Burak Arıkan & Sam Hart
-/// @notice extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
+/// @notice Extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
 contract Prompt is ERC721URIStorage, ReentrancyGuard {
 
@@ -159,8 +157,19 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
 
     /// ============ Functions ============
 
-    /// @notice Create a session with tokenID. It will be mintable when session is finalized (all members contributed or endsAt is exceeded)
-    function createSession(address _reservedAddress, uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
+    /// @notice Create a session with tokenID. A session becomes mintable when it is finalized (all members contributed or endsAt is exceeded)
+    /// @param _reservedAddress If set (optional), only this address can mint. Can be used for commissioned work.
+    /// @param _endsAt All contributions must be submited before this time
+    /// @param _members List of addresses who can contribute
+    /// @param _contributionURI The first contribution to the session
+    /// @param _contributionPrice The first contribution price
+    function createSession(
+        address _reservedAddress,
+        uint256 _endsAt,
+        address[] memory _members,
+        string memory _contributionURI,
+        uint256 _contributionPrice
+    )
         external
         isNotEmpty(_contributionURI)
         isAllowed()
@@ -198,7 +207,14 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
     }
 
     /// @notice msg.sender contributes to a session with tokenId, contribution URI and price
-    function contribute(uint256 _tokenId, string memory _contributionURI, uint256 _contributionPrice)
+    /// @param _tokenId The session to contribute
+    /// @param _contributionURI Contribution content
+    /// @param _contributionPrice Contribution price
+    function contribute(
+        uint256 _tokenId,
+        string memory _contributionURI,
+        uint256 _contributionPrice
+    )
         external
         isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
@@ -211,7 +227,9 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
         emit Contributed(_tokenId, _contributionURI, msg.sender, _contributionPrice);
     }
 
-    /// @notice Contributor can set price of a contribution, if not yet minted
+    /// @notice Set price of the msg.sender's contribution to a session, if not yet minted
+    /// @param _tokenId The session of contribution
+    /// @param _price New contribution price
     function setPrice(uint256 _tokenId, uint256 _price)
         external
         memberContributed(_tokenId)
@@ -224,6 +242,8 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
     }
 
     /// @notice Anyone can mint paying the total
+    /// @param _tokenId The session to mint
+    /// @param _tokenURI Content of the finalized session
     function mint(uint256 _tokenId, string memory _tokenURI)
         external
         payable
