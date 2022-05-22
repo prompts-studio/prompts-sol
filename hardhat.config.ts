@@ -29,8 +29,7 @@ const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
 // Be aware of NEVER putting real Ether into testing accounts
-const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
-const FUJI_PRIVATE_KEY = process.env.FUJI_PRIVATE_KEY;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 task("accounts", "Prints the list of accounts", async (args, hre): Promise<void> => {
   const accounts: SignerWithAddress[] = await hre.ethers.getSigners()
@@ -60,7 +59,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.FUJI_CONTRACT_ADDRESS, // Deployed contract address
+    address: process.env.RINKEBY_CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
@@ -139,7 +138,7 @@ export default {
       url: 'https://api.avax-test.network/ext/bc/C/rpc',
       gasPrice: 225000000000,
       chainId: 43113,
-      accounts: [`${FUJI_PRIVATE_KEY}`]
+      accounts: [`${PRIVATE_KEY}`]
     },
     mainnet: {
       url: 'https://api.avax.network/ext/bc/C/rpc',
@@ -149,14 +148,20 @@ export default {
     },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
-      accounts: [`${ROPSTEN_PRIVATE_KEY}`]
+      accounts: [`${PRIVATE_KEY}`]
+    },
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      accounts: [`${PRIVATE_KEY}`]
     }
   },
   etherscan: {
     apiKey:
     // process.env.ETHERSCAN_KEY
     {
+      mainnet: process.env.ETHERSCAN_KEY,
       ropsten: process.env.ETHERSCAN_KEY,
+      rinkeby: process.env.ETHERSCAN_KEY,
       avalanche: process.env.SNOWTRACE_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_KEY,
     }

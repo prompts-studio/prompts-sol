@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "hardhat/console.sol";
 
@@ -12,7 +13,7 @@ import "hardhat/console.sol";
 /// @author Burak Arıkan & Sam Hart
 /// @notice extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
-contract Prompt is ERC721URIStorage, Ownable {
+contract Prompt is ERC721URIStorage, ReentrancyGuard {
 
     /// ============ Events ============
 
@@ -76,7 +77,9 @@ contract Prompt is ERC721URIStorage, Ownable {
         uint256 _baseMintFee,
         uint256 _mintFee,
         address _feeAddress
-    ) ERC721(
+    )
+    ReentrancyGuard()
+    ERC721(
         tokenName,
         tokenSymbol
     ) {
@@ -98,12 +101,12 @@ contract Prompt is ERC721URIStorage, Ownable {
     /// ============ Modifiers ============
 
     modifier isAllowed() {
-        require (allowlist[msg.sender] == true,
+        require (allowlist[msg.sender],
             'account is not in allowlist');
         _;
     }
     modifier onlyMemberOf(uint256 _tokenId) {
-        if (membership[_tokenId][msg.sender] == false) {
+        if (!membership[_tokenId][msg.sender]) {
             revert('not a session member');
         }
         _;
@@ -143,20 +146,20 @@ contract Prompt is ERC721URIStorage, Ownable {
             'is not the last contribution');
         _;
     }
-    modifier finalizable(uint _tokenId) {
+    modifier isFinalized(uint _tokenId) {
         require(contributionCount[_tokenId] == memberLimit || (endsAt[_tokenId] != 0 && endsAt[_tokenId] <= block.timestamp),
             'not all members contributed or session has not ended yet');
         _;
     }
     modifier isNotMinted(uint _tokenId) {
-        require(minted[_tokenId] == false,
+        require(!minted[_tokenId],
             'session already minted');
         _;
     }
 
     /// ============ Functions ============
 
-    /// @notice Create a session with tokenID but without minting
+    /// @notice Create a session with tokenID. It will be mintable when session is finalized (all members contributed or endsAt is exceeded)
     function createSession(address _reservedAddress, uint256 _endsAt, address[] memory _members, string memory _contributionURI, uint256 _contributionPrice)
         external
         isNotEmpty(_contributionURI)
@@ -189,7 +192,6 @@ contract Prompt is ERC721URIStorage, Ownable {
         contributedTokens[msg.sender].push(newTokenId);
         contributionCount[newTokenId]++;
 
-        // _safeMint(_to, newTokenId); // Skip minting
         _tokenIds.increment();
 
         emit SessionCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
@@ -225,7 +227,8 @@ contract Prompt is ERC721URIStorage, Ownable {
     function mint(uint256 _tokenId, string memory _tokenURI)
         external
         payable
-        finalizable(_tokenId)
+        nonReentrant()
+        isFinalized(_tokenId)
         isNotEmpty(_tokenURI)
     {
         if (reservedFor[_tokenId] != address(0)) {
@@ -251,11 +254,12 @@ contract Prompt is ERC721URIStorage, Ownable {
             }
         }
 
+        minted[_tokenId] = true;
+
         feeAddress.transfer(finalMintFee);
 
         _safeMint(msg.sender, _tokenId);
         _setTokenURI(_tokenId, _tokenURI);
-        minted[_tokenId] = true;
 
         emit Minted(_tokenId, _tokenURI, msg.sender);
     }
@@ -320,14 +324,14 @@ contract Prompt is ERC721URIStorage, Ownable {
             address
         )
     {
-        string memory tokenuri;
-        address owner;
+        string memory tokenuri = "";
+        address sessionOwner = address(0);
         if (minted[_tokenId]) {
             tokenuri = tokenURI(_tokenId);
-            owner = ownerOf(_tokenId);
+            sessionOwner = ownerOf(_tokenId);
         }
         return(
-            owner,
+            sessionOwner,
             endsAt[_tokenId],
             tokenuri,
             members[_tokenId],

@@ -105,9 +105,9 @@ describe('Prompt contract', function () {
             expect(await prompt.symbol()).to.equal(symbol);
         });
 
-        it("has an owner", async function () {
-            expect(await prompt.owner()).to.equal(owner.address);
-        });
+        // it("has an owner", async function () {
+        //     expect(await prompt.owner()).to.equal(owner.address);
+        // });
 
         it("has deployment parameters: memberLimit, totalSupply, baseMintFee, mintFee, feeAddress", async function () {
             expect(await prompt.memberLimit()).to.equal(memberLimit);
