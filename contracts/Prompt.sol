@@ -31,7 +31,7 @@ contract Prompt is ERC721URIStorage {
     /// ============ Mutable storage ============
 
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    Counters.Counter private _tokenIds; // why plural?
     mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
     mapping (uint256 => address) public reservedFor; // reservedFor[tokenId]
     mapping (uint256 => bool) public minted; // minted[tokenId]
@@ -175,7 +175,7 @@ contract Prompt is ERC721URIStorage {
         require(_members.length <= memberLimit, "reached member limit");
         require(_endsAt > block.timestamp, "quit living in the past");
 
-        uint256 newTokenId = _tokenIds.current();
+        uint256 newTokenId = _tokenIds.current(); // does this start with a tokenId of 0 or 1?
 
         for (uint256 i=0; i < _members.length; i++) {
             require(_members[i] != address(0), 'address cannot be null address');
@@ -198,6 +198,9 @@ contract Prompt is ERC721URIStorage {
         contributedTokens[msg.sender].push(newTokenId);
         contributionCount[newTokenId]++;
 
+        // because _tokenIds is always increased right after minting,
+        // _tokenIds.current() does not actually ever refer to the current tokenId,
+        // but always to the next (non-existing) one
         _tokenIds.increment();
 
         emit SessionCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
