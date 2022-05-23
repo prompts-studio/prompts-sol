@@ -4,14 +4,12 @@ pragma solidity 0.8.12;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 
 /// @title Prompt
 /// @author Burak Arıkan & Sam Hart
 /// @notice Extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
-contract Prompt is ERC721URIStorage, ReentrancyGuard {
+contract Prompt is ERC721URIStorage {
 
     /// ============ Events ============
 
@@ -24,10 +22,10 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
     /// ============ Structs ============
 
     struct Contribution {
-        string contributionURI;
         uint256 createdAt;
-        address payable creator;
         uint256 price;
+        address payable creator;
+        string contributionURI;
     }
 
     /// ============ Mutable storage ============
@@ -48,11 +46,11 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
 
     /// ============ Immutable storage ============
 
-    uint256 public memberLimit;
-    uint256 public totalSupply;
-    uint256 public sessionLimitPerAccount;
-    uint256 public baseMintFee;
-    uint256 public mintFee;
+    uint256 immutable public memberLimit;
+    uint256 immutable public totalSupply;
+    uint256 immutable public sessionLimitPerAccount;
+    uint256 immutable public baseMintFee;
+    uint256 immutable public mintFeeRate;
     address payable feeAddress;
 
     /// ============ Constructor ============
@@ -64,7 +62,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
     /// @param _totalSupply total NFTs to mint
     /// @param _sessionLimitPerAccount max number of NFTs a member can create
     /// @param _baseMintFee in wei per NFT
-    /// @param _mintFee in percentage per NFT
+    /// @param _mintFeeRate in percentage per NFT
     /// @param _feeAddress where mint fees are paid
     constructor(
         string memory tokenName,
@@ -73,26 +71,24 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
         uint256 _totalSupply,
         uint256 _sessionLimitPerAccount,
         uint256 _baseMintFee,
-        uint256 _mintFee,
-        address _feeAddress
-    )
-    ReentrancyGuard()
-    ERC721(
+        uint256 _mintFeeRate,
+        address payable _feeAddress
+    ) ERC721(
         tokenName,
         tokenSymbol
     ) {
         require(_memberLimit >= 2, "_memberLimit cannot be smaller than 2");
         require(_totalSupply > 0, "_totalSupply cannot be 0");
-        require(_baseMintFee > 0, "_mintFee cannot be 0");
-        require(_mintFee > 0, "_mintFee cannot be 0");
+        require(_baseMintFee > 0, "_baseMintFee cannot be 0");
+        require(_mintFeeRate > 0, "_mintFeeRate cannot be 0");
         require(_feeAddress != address(0), "feeAddress cannot be null address");
 
         memberLimit = _memberLimit;
         totalSupply = _totalSupply;
         sessionLimitPerAccount = _sessionLimitPerAccount;
         baseMintFee = _baseMintFee;
-        mintFee = _mintFee;
-        feeAddress = payable(_feeAddress);
+        mintFeeRate = _mintFeeRate;
+        feeAddress = _feeAddress;
         allowlist[msg.sender] = true;
     }
 
@@ -115,12 +111,12 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
         _;
     }
     modifier isNotEnded(uint256 _tokenId) {
-        require(endsAt[_tokenId] >= block.timestamp,
+        require(endsAt[_tokenId] > block.timestamp,
                 'session has ended');
         _;
     }
     modifier isEnded(uint256 _tokenId) {
-        require(endsAt[_tokenId] <= block.timestamp,
+        require(endsAt[_tokenId] < block.timestamp,
                 'session has not ended yet');
         _;
     }
@@ -145,7 +141,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
         _;
     }
     modifier isFinalized(uint _tokenId) {
-        require(contributionCount[_tokenId] == memberLimit || (endsAt[_tokenId] != 0 && endsAt[_tokenId] <= block.timestamp),
+        require(contributionCount[_tokenId] == memberLimit || (endsAt[_tokenId] != 0 && endsAt[_tokenId] < block.timestamp),
             'not all members contributed or session has not ended yet');
         _;
     }
@@ -177,6 +173,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
     {
         require(_tokenIds.current() < totalSupply, "reached token supply limit");
         require(_members.length <= memberLimit, "reached member limit");
+        require(_endsAt > block.timestamp, "quit living in the past");
 
         uint256 newTokenId = _tokenIds.current();
 
@@ -197,7 +194,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
 
         createdSessions[msg.sender].push(newTokenId);
 
-        contributed[newTokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
+        contributed[newTokenId][msg.sender] = Contribution(block.timestamp, _contributionPrice, payable(msg.sender), _contributionURI);
         contributedTokens[msg.sender].push(newTokenId);
         contributionCount[newTokenId]++;
 
@@ -220,7 +217,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
         onlyMemberOf(_tokenId)
         memberNotContributed(_tokenId)
     {
-        contributed[_tokenId][msg.sender] = Contribution(_contributionURI, block.timestamp, payable(msg.sender), _contributionPrice);
+        contributed[_tokenId][msg.sender] = Contribution(block.timestamp, _contributionPrice, payable(msg.sender), _contributionURI);
         contributedTokens[msg.sender].push(_tokenId);
         contributionCount[_tokenId]++;
 
@@ -247,7 +244,6 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
     function mint(uint256 _tokenId, string memory _tokenURI)
         external
         payable
-        nonReentrant()
         isFinalized(_tokenId)
         isNotEmpty(_tokenURI)
     {
@@ -255,7 +251,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
             require(reservedFor[_tokenId] == msg.sender, "Mint is reserved for another address");
         }
 
-        uint256 finalMintFee = baseMintFee;
+        uint256 mintFee = baseMintFee;
         uint256 totalPrice = 0;
 
         Contribution[] memory contributions = getContributions(_tokenId);
@@ -264,9 +260,9 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
             totalPrice += contributions[i].price;
         }
         if (totalPrice > 0) {
-            finalMintFee = totalPrice * mintFee / 100;
+            mintFee = totalPrice * mintFeeRate / 100;
         }
-        require(msg.value == totalPrice + finalMintFee, "Payment must be equal to listing price + mint fee");
+        require(msg.value == totalPrice + mintFee, "Payment must be equal to listing price + mint fee");
 
         for (uint256 i=0; i < contributions.length; i++) {
             if (contributions[i].price > 0) {
@@ -276,7 +272,7 @@ contract Prompt is ERC721URIStorage, ReentrancyGuard {
 
         minted[_tokenId] = true;
 
-        feeAddress.transfer(finalMintFee);
+        feeAddress.transfer(mintFee);
 
         _safeMint(msg.sender, _tokenId);
         _setTokenURI(_tokenId, _tokenURI);

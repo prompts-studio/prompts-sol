@@ -6,7 +6,7 @@ const symbol = 'pNFT';
 const memberLimit = 3;
 const totalSupply = 2;
 const sessionLimitPerAccount = 1;
-const mintFee = 5; // percent
+const mintFeeRate = 5; // percent
 const baseMintFee = ethers.utils.parseUnits('0.01', 'ether');
 
 const tokenId = 0;
@@ -58,9 +58,9 @@ async function calculatePayment(tokenId) {
     const contributions = mySession[4];
 
     let totalPrice = ethers.BigNumber.from(0);
-    let finalMintFee = ethers.BigNumber.from(await prompt.baseMintFee());
-    const mintFee = ethers.BigNumber.from(await prompt.mintFee());
-    // console.log('mintFee', ethers.utils.formatEther(mintFee));
+    let mintFee = ethers.BigNumber.from(await prompt.baseMintFee());
+    const mintFeeRate = await prompt.mintFeeRate(); // ethers.BigNumber.from(await prompt.mintFeeRate());
+    console.log('mintFeeRate', ethers.utils.formatEther(mintFeeRate));
 
     contributions.forEach(c => {
         totalPrice = totalPrice.add(ethers.BigNumber.from(c.price));
@@ -68,9 +68,9 @@ async function calculatePayment(tokenId) {
     // console.log('totalPrice', ethers.utils.formatEther(totalPrice));
 
     if (totalPrice > 0) {
-        finalMintFee = totalPrice.mul(mintFee).div(100);
+        mintFee = totalPrice.mul(mintFeeRate).div(100);
     }
-    return totalPrice.add(finalMintFee);
+    return totalPrice.add(mintFee);
 }
 
 describe('Prompt contract', function () {
@@ -90,7 +90,7 @@ describe('Prompt contract', function () {
                     totalSupply,
                     sessionLimitPerAccount,
                     baseMintFee,
-                    mintFee,
+                    mintFeeRate,
                     feeAddress
                 );
         await prompt.deployed();
@@ -109,12 +109,12 @@ describe('Prompt contract', function () {
         //     expect(await prompt.owner()).to.equal(owner.address);
         // });
 
-        it("has deployment parameters: memberLimit, totalSupply, baseMintFee, mintFee, feeAddress", async function () {
+        it("has deployment parameters: memberLimit, totalSupply, baseMintFee, mintFeeRate, feeAddress", async function () {
             expect(await prompt.memberLimit()).to.equal(memberLimit);
             expect(await prompt.totalSupply()).to.equal(totalSupply);
             expect(await prompt.sessionLimitPerAccount()).to.equal(sessionLimitPerAccount);
             expect(await prompt.baseMintFee()).to.equal(baseMintFee);
-            expect(await prompt.mintFee()).to.equal(mintFee);
+            expect(await prompt.mintFeeRate()).to.equal(mintFeeRate);
             // expect(await prompt.feeAddress()).to.equal(owner.address);
         });
     });

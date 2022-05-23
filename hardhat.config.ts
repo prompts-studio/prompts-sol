@@ -165,5 +165,9 @@ export default {
       avalanche: process.env.SNOWTRACE_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_KEY,
     }
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 30
   }
 }
