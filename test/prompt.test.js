@@ -131,7 +131,8 @@ describe('Prompt contract', function () {
 
             expect(await prompt.createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.emit(prompt, "SessionCreated")
-                .withArgs(tokenId, endsAt, members, contributionURI_0, contributionPrice_0, owner.address, reservedAddress);
+                .withArgs(tokenId, owner.address, reservedAddress);
+                // .withArgs(tokenId, endsAt, members, contributionURI_0, contributionPrice_0, owner.address, reservedAddress);
         });
 
         it("cannot create a session if the account reached the limit", async function () {
@@ -153,11 +154,12 @@ describe('Prompt contract', function () {
         it("can create session (without reserverAddress) if in the allowlist", async function () {
             const blocktime = await blockTime();
             const endsAt = blocktime + duration;
-            const emptyReservedAddress = "0x0000000000000000000000000000000000000000";
+            const emptyReservedAddress = ethers.constants.AddressZero; // "0x0000000000000000000000000000000000000000";
 
             expect(await prompt.connect(addr1).createSession(emptyReservedAddress, endsAt, members, contributionURI_1, contributionPrice_1))
                 .to.emit(prompt, "SessionCreated")
-                .withArgs(tokenId_1, endsAt, members, contributionURI_1, contributionPrice_1, addr1.address, emptyReservedAddress);
+                .withArgs(tokenId_1, addr1.address, emptyReservedAddress);
+                // .withArgs(tokenId_1, endsAt, members, contributionURI_1, contributionPrice_1, addr1.address, emptyReservedAddress);
         });
 
         it("owner contributed token 0", async function () {
@@ -266,8 +268,8 @@ describe('Prompt contract', function () {
             const buyerReserved = await prompt.connect(addr5);
 
             expect(await buyerReserved.mint(tokenId, tokenURI, {value: total}))
-                .to.emit(prompt, "Minted")
-                .withArgs(tokenId, tokenURI, addr5.address);
+                .to.emit(prompt, "Transfer")
+                .withArgs(ethers.constants.AddressZero, addr5.address, tokenId);
         });
 
         it("cannot set new price if minted", async function () {
@@ -295,8 +297,8 @@ describe('Prompt contract', function () {
             const someoneReserved = await prompt.connect(addr7);
 
             expect(await someoneReserved.mint(tokenId_1, tokenURI, {value: total}))
-                .to.emit(prompt, "Minted")
-                .withArgs(tokenId_1, tokenURI, addr7.address);
+                .to.emit(prompt, "Transfer")
+                .withArgs(ethers.constants.AddressZero, addr7.address, tokenId_1);
         });
 
         it("buyer and member balances check", async function () {

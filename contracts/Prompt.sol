@@ -13,11 +13,10 @@ contract Prompt is ERC721URIStorage {
 
     /// ============ Events ============
 
-    event SessionCreated(uint256 tokenId, uint256 end, address[] members, string contributionURI, uint256 contributionPrice, address contributor, address reservedAddress);
+    event SessionCreated(uint256 tokenId, address contributor, address reservedAddress);
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, string contributionURI, address creator, uint256 price);
     event PriceSet(uint256 tokenId, address contributor, uint256 price);
-    event Minted(uint256 tokenId, string tokenURI, address creator);
 
     /// ============ Structs ============
 
@@ -32,14 +31,14 @@ contract Prompt is ERC721URIStorage {
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
+    mapping (uint256 => uint8) public memberCount; // memberCount[tokenId]
+    mapping (uint256 => uint8) public contributionCount; // contributionCount[tokenId]
+    mapping (uint256 => bool) public minted; // minted[tokenId]
     mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
     mapping (uint256 => address) public reservedFor; // reservedFor[tokenId]
-    mapping (uint256 => bool) public minted; // minted[tokenId]
     mapping (uint256 => address[]) public members; // members[tokenId]
     mapping (address => uint256[]) public createdSessions; // createdSessions[address]
     mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
-    mapping (uint256 => uint256) public memberCount; // memberCount[tokenId]
-    mapping (uint256 => uint256) public contributionCount; // contributionCount[tokenId]
     mapping (uint256 => mapping (address => Contribution)) public contributed; // contributed[tokenId][address]
     mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
     mapping (address => bool) public allowlist; // allowlist[address]
@@ -79,6 +78,7 @@ contract Prompt is ERC721URIStorage {
     ) {
         require(_memberLimit >= 2, "_memberLimit cannot be smaller than 2");
         require(_totalSupply > 0, "_totalSupply cannot be 0");
+        require(_sessionLimitPerAccount > 0, "_sessionLimitPerAccount cannot be 0");
         require(_baseMintFee > 0, "_baseMintFee cannot be 0");
         require(_mintFeeRate > 0, "_mintFeeRate cannot be 0");
         require(_feeAddress != address(0), "feeAddress cannot be null address");
@@ -100,9 +100,8 @@ contract Prompt is ERC721URIStorage {
         _;
     }
     modifier onlyMemberOf(uint256 _tokenId) {
-        if (!membership[_tokenId][msg.sender]) {
-            revert('not a session member');
-        }
+        require(membership[_tokenId][msg.sender],
+            'not a session member');
         _;
     }
     modifier canCreateSession() {
@@ -162,8 +161,8 @@ contract Prompt is ERC721URIStorage {
     function createSession(
         address _reservedAddress,
         uint256 _endsAt,
-        address[] memory _members,
-        string memory _contributionURI,
+        address[] calldata _members,
+        string calldata _contributionURI,
         uint256 _contributionPrice
     )
         external
@@ -177,13 +176,15 @@ contract Prompt is ERC721URIStorage {
 
         uint256 newTokenId = _tokenIds.current();
 
-        for (uint256 i=0; i < _members.length; i++) {
+        uint256 length = _members.length;
+        for (uint256 i=0; i < length;) {
             require(_members[i] != address(0), 'address cannot be null address');
             require(!membership[newTokenId][_members[i]], 'address is already a member of session');
             membership[newTokenId][_members[i]] = true;
             memberCount[newTokenId]++;
             members[newTokenId].push(_members[i]);
             allowlist[_members[i]] = true;
+            unchecked { ++i; }
         }
 
         endsAt[newTokenId] = _endsAt;
@@ -200,7 +201,7 @@ contract Prompt is ERC721URIStorage {
 
         _tokenIds.increment();
 
-        emit SessionCreated(newTokenId, _endsAt, _members, _contributionURI, _contributionPrice, msg.sender, _reservedAddress);
+        emit SessionCreated(newTokenId, msg.sender, _reservedAddress);
     }
 
     /// @notice msg.sender contributes to a session with tokenId, contribution URI and price
@@ -209,7 +210,7 @@ contract Prompt is ERC721URIStorage {
     /// @param _contributionPrice Contribution price
     function contribute(
         uint256 _tokenId,
-        string memory _contributionURI,
+        string calldata _contributionURI,
         uint256 _contributionPrice
     )
         external
@@ -256,18 +257,21 @@ contract Prompt is ERC721URIStorage {
 
         Contribution[] memory contributions = getContributions(_tokenId);
 
-        for (uint256 i=0; i < contributions.length; i++) {
+        uint256 length = contributions.length;
+        for (uint256 i=0; i < length;) {
             totalPrice += contributions[i].price;
+            unchecked { ++i; }
         }
         if (totalPrice > 0) {
             mintFee = totalPrice * mintFeeRate / 100;
         }
         require(msg.value == totalPrice + mintFee, "Payment must be equal to listing price + mint fee");
 
-        for (uint256 i=0; i < contributions.length; i++) {
+        for (uint256 i=0; i < length;) {
             if (contributions[i].price > 0) {
                 contributions[i].creator.transfer(contributions[i].price);
             }
+            unchecked { ++i; }
         }
 
         minted[_tokenId] = true;
@@ -276,8 +280,6 @@ contract Prompt is ERC721URIStorage {
 
         _safeMint(msg.sender, _tokenId);
         _setTokenURI(_tokenId, _tokenURI);
-
-        emit Minted(_tokenId, _tokenURI, msg.sender);
     }
 
     /// ============ Read-only functions ============
