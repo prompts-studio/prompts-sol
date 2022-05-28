@@ -74,7 +74,9 @@ yarn deploy --network rinkeby
 yarn deploy --network fuji
 
 # Deploy to Avalanche mainnet
+# feeAddress update in .env and deploy.ts: 0xa8CA4cF975a4DF6194c8B30F1501f30FCd557c9C
 yarn deploy --network mainnet
+
 ```
 
 ### 3. Verify contract on Explorer (Etherscan, Snowtrace)
@@ -82,10 +84,10 @@ yarn deploy --network mainnet
 ```sh
 # 1. Update .env with deployed contract address
 ROPSTEN_CONTRACT_ADDRESS=0x3d60c48bf526F4F74567C79d178BD58016f55F49
-RINKEBY_CONTRACT_ADDRESS=0x1594c71FE3f7Bb6ACeCD97e014986090589C57bD
-FUJI_CONTRACT_ADDRESS=0xeC3fCb985FD2F95F4a54b8d97889Ac2AA68Cbd88
+RINKEBY_CONTRACT_ADDRESS=0x3A11f0a022233071B335d4c1Ec5CD1C23F88F584
+FUJI_CONTRACT_ADDRESS=0x7237DF2d6Ad9599f5919421a0A70A02601e641F1
 
-# 2. add Deployed contract address to hardhat.config.ts
+# 2. Set the deployed [NETWORK]_CONTRACT_ADDRESS in hardhat.config.ts
 
 # 3. Verify contract
 
@@ -93,10 +95,10 @@ FUJI_CONTRACT_ADDRESS=0xeC3fCb985FD2F95F4a54b8d97889Ac2AA68Cbd88
 npx hardhat verify --network ropsten --constructor-args arguments.ts 0x3d60c48bf526F4F74567C79d178BD58016f55F49 --show-stack-traces
 
 # Verif on Etherscan (Rinkeby)
-npx hardhat verify --network ropsten --constructor-args arguments.ts 0x1594c71FE3f7Bb6ACeCD97e014986090589C57bD --show-stack-traces
+npx hardhat verify --network rinkeby --constructor-args arguments.ts 0x3A11f0a022233071B335d4c1Ec5CD1C23F88F584 --show-stack-traces
 
 # Verify on Snowtrace
-npx hardhat verify --network fuji --constructor-args arguments.ts 0xeC3fCb985FD2F95F4a54b8d97889Ac2AA68Cbd88 --show-stack-traces
+npx hardhat verify --network fuji --constructor-args arguments.ts 0x7237DF2d6Ad9599f5919421a0A70A02601e641F1 --show-stack-traces
 
 # Verification troubleshoot:
 

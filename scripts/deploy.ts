@@ -16,13 +16,13 @@ const main = async(): Promise<any> => {
     console.log("Deployer account:", owner.address);
     console.log("Account balance:", (await owner.getBalance()).toString());
 
-    const name = "Prompt";
-    const symbol = "pNFT";
+    const name = "Exquisite Corpse";
+    const symbol = "EXC";
     const memberLimit = 3;
-    const totalSupply = 120;
-    const sessionLimitPerAccount = 3;
-    const baseMintFee = ethers.utils.parseUnits("0.001", "ether");
-    const mintFee = 5;
+    const totalSupply = 1000;
+    const sessionLimitPerAccount = 1;
+    const baseMintFee = ethers.utils.parseUnits("0.01", "ether");
+    const mintFeeRate = 10;
     const feeAddress = process.env.FEE_ADDRESS;
 
     const Prompt = await ethers.getContractFactory("Prompt");
@@ -33,7 +33,7 @@ const main = async(): Promise<any> => {
                     totalSupply,
                     sessionLimitPerAccount,
                     baseMintFee,
-                    mintFee,
+                    mintFeeRate,
                     feeAddress
                 );
     await prompt.deployed(); // waiting for the contract to be deployed

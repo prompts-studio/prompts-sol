@@ -11,7 +11,9 @@ const baseMintFee = ethers.utils.parseUnits('0.01', 'ether');
 
 const tokenId = 0;
 const tokenId_1 = 1;
-const tokenURI = "https://...";
+const tokenURI = "https://zero...";
+const tokenURI_1 = "https://one...";
+const tokenURI_2 = "https://two...";
 
 const duration = 86400; // 24 hrs
 const contributionURI_0 = "https://zero...";
@@ -196,7 +198,7 @@ describe('Prompt contract', function () {
             // const contributionCount = await prompt.contributionCount(tokenId);
             // console.log('contributionCount', contributionCount.toString());
 
-            await expect(prompt.mint(tokenId, tokenURI))
+            await expect(prompt.mint(tokenId))
                 .to.be.reverted;
         });
 
@@ -259,15 +261,19 @@ describe('Prompt contract', function () {
             const total = await calculatePayment(tokenId);
             const buyer = await prompt.connect(addr6);
 
-            await expect(buyer.mint(tokenId, tokenURI, {value: total}))
+            await expect(buyer.mint(tokenId, {value: total}))
                 .to.be.reverted;
+        });
+
+        it("non-minted token does not have tokenURI", async function () {
+            await expect(prompt.tokenURI(tokenId)).to.be.reverted;
         });
 
         it("can mint if reservedAddress and session completed", async function () {
             const total = await calculatePayment(tokenId);
             const buyerReserved = await prompt.connect(addr5);
 
-            expect(await buyerReserved.mint(tokenId, tokenURI, {value: total}))
+            expect(await buyerReserved.mint(tokenId, {value: total}))
                 .to.emit(prompt, "Transfer")
                 .withArgs(ethers.constants.AddressZero, addr5.address, tokenId);
         });
@@ -296,7 +302,7 @@ describe('Prompt contract', function () {
             const total = await calculatePayment(tokenId_1);
             const someoneReserved = await prompt.connect(addr7);
 
-            expect(await someoneReserved.mint(tokenId_1, tokenURI, {value: total}))
+            expect(await someoneReserved.mint(tokenId_1, {value: total}))
                 .to.emit(prompt, "Transfer")
                 .withArgs(ethers.constants.AddressZero, addr7.address, tokenId_1);
         });
@@ -339,13 +345,18 @@ describe('Prompt contract', function () {
             expect(await prompt.getContributedTokens(addr1.address)).to.eql(tokens);
         });
 
+        it("minted token has the correct tokenURI", async function () {
+            const mintedTokenURI = await prompt.tokenURI(tokenId);
+            expect(mintedTokenURI).to.eql(tokenURI_2);
+        });
+
         it("get a session that is minted", async function () {
             const mySession = await prompt.getSession(tokenId);
             console.log(mySession);
 
             expect(mySession[0]).to.eql(addr5.address); // addr5 the new owner
             expect(mySession[1]).to.gt(await blockTime()); //endsAt
-            expect(mySession[2]).to.eql(tokenURI); // tokenURI
+            expect(mySession[2]).to.eql(tokenURI_2); // tokenURI
             expect(mySession[3]).to.eql(members); // deep equality check for arrays
             // mySession[4] // contributions array
         });

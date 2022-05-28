@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 /// @author Burak Arıkan & Sam Hart
 /// @notice Extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
-contract Prompt is ERC721URIStorage {
+contract Prompt is ERC721 {
 
     /// ============ Events ============
 
@@ -42,6 +42,7 @@ contract Prompt is ERC721URIStorage {
     mapping (uint256 => mapping (address => Contribution)) public contributed; // contributed[tokenId][address]
     mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
     mapping (address => bool) public allowlist; // allowlist[address]
+    mapping(uint256 => string) private _tokenURIs; // _tokenURIs[tokenId]
 
     /// ============ Immutable storage ============
 
@@ -156,7 +157,7 @@ contract Prompt is ERC721URIStorage {
     /// @param _reservedAddress If set (optional), only this address can mint. Can be used for commissioned work.
     /// @param _endsAt All contributions must be submited before this time
     /// @param _members List of addresses who can contribute
-    /// @param _contributionURI The first contribution to the session
+    /// @param _contributionURI The first contribution metadata to the session
     /// @param _contributionPrice The first contribution price
     function createSession(
         address _reservedAddress,
@@ -199,6 +200,8 @@ contract Prompt is ERC721URIStorage {
         contributedTokens[msg.sender].push(newTokenId);
         contributionCount[newTokenId]++;
 
+        _setTokenURI(newTokenId, _contributionURI);
+
         _tokenIds.increment();
 
         emit SessionCreated(newTokenId, msg.sender, _reservedAddress);
@@ -206,7 +209,7 @@ contract Prompt is ERC721URIStorage {
 
     /// @notice msg.sender contributes to a session with tokenId, contribution URI and price
     /// @param _tokenId The session to contribute
-    /// @param _contributionURI Contribution content
+    /// @param _contributionURI Contribution metadata
     /// @param _contributionPrice Contribution price
     function contribute(
         uint256 _tokenId,
@@ -217,10 +220,13 @@ contract Prompt is ERC721URIStorage {
         isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
         memberNotContributed(_tokenId)
+        isNotEmpty(_contributionURI)
     {
         contributed[_tokenId][msg.sender] = Contribution(block.timestamp, _contributionPrice, payable(msg.sender), _contributionURI);
         contributedTokens[msg.sender].push(_tokenId);
         contributionCount[_tokenId]++;
+
+        _setTokenURI(_tokenId, _contributionURI);
 
         emit Contributed(_tokenId, _contributionURI, msg.sender, _contributionPrice);
     }
@@ -241,12 +247,10 @@ contract Prompt is ERC721URIStorage {
 
     /// @notice Anyone can mint paying the total
     /// @param _tokenId The session to mint
-    /// @param _tokenURI Content of the finalized session
-    function mint(uint256 _tokenId, string memory _tokenURI)
+    function mint(uint256 _tokenId)
         external
         payable
         isFinalized(_tokenId)
-        isNotEmpty(_tokenURI)
     {
         if (reservedFor[_tokenId] != address(0)) {
             require(reservedFor[_tokenId] == msg.sender, "Mint is reserved for another address");
@@ -279,10 +283,20 @@ contract Prompt is ERC721URIStorage {
         feeAddress.transfer(mintFee);
 
         _safeMint(msg.sender, _tokenId);
-        _setTokenURI(_tokenId, _tokenURI);
+    }
+
+    /// ============ Internal functions ============
+
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+        _tokenURIs[tokenId] = _tokenURI;
     }
 
     /// ============ Read-only functions ============
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "URI query for nonexistent token");
+        return _tokenURIs[tokenId];
+    }
 
     /// @notice Get current count of minted tokens
     /// @return Returns number

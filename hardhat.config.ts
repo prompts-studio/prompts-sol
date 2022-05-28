@@ -49,17 +49,17 @@ task("balances", "Prints the list of AVAX account balances", async (args, hre): 
 })
 
 task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<void> => {
-  const name = "Prompt";
-  const symbol = "pNFT";
+  const name = "Exquisite Corpse";
+  const symbol = "EXC";
   const memberLimit = 3;
-  const totalSupply = 120;
-  const sessionLimitPerAccount = 3;
-  const baseMintFee = hre.ethers.utils.parseUnits("0.001", "ether");
-  const mintFee = 5;
+  const totalSupply = 1000;
+  const sessionLimitPerAccount = 1;
+  const baseMintFee = hre.ethers.utils.parseUnits("0.01", "ether");
+  const mintFee = 10;
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.RINKEBY_CONTRACT_ADDRESS, // Deployed contract address
+    address: process.env.FUJI_CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
