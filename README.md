@@ -84,7 +84,7 @@ yarn deploy --network mainnet
 ```sh
 # 1. Update .env with deployed contract address
 ROPSTEN_CONTRACT_ADDRESS=0x3d60c48bf526F4F74567C79d178BD58016f55F49
-RINKEBY_CONTRACT_ADDRESS=0x3A11f0a022233071B335d4c1Ec5CD1C23F88F584
+RINKEBY_CONTRACT_ADDRESS=0x3c87cB72f329a5358888C7669BE347F3d4c80679
 FUJI_CONTRACT_ADDRESS=0x7237DF2d6Ad9599f5919421a0A70A02601e641F1
 
 # 2. Set the deployed [NETWORK]_CONTRACT_ADDRESS in hardhat.config.ts
@@ -95,12 +95,14 @@ FUJI_CONTRACT_ADDRESS=0x7237DF2d6Ad9599f5919421a0A70A02601e641F1
 npx hardhat verify --network ropsten --constructor-args arguments.ts 0x3d60c48bf526F4F74567C79d178BD58016f55F49 --show-stack-traces
 
 # Verif on Etherscan (Rinkeby)
-npx hardhat verify --network rinkeby --constructor-args arguments.ts 0x3A11f0a022233071B335d4c1Ec5CD1C23F88F584 --show-stack-traces
+npx hardhat verify --network rinkeby --constructor-args arguments.ts 0x3c87cB72f329a5358888C7669BE347F3d4c80679 --show-stack-traces
 
 # Verify on Snowtrace
 npx hardhat verify --network fuji --constructor-args arguments.ts 0x7237DF2d6Ad9599f5919421a0A70A02601e641F1 --show-stack-traces
 
 # Verification troubleshoot:
+
+# If the contract was recently deployed and this fact hasn't propagated to the backend yet. Try waiting for a minute before verifying your contract.
 
 # Clear the cache and delete the artifacts
 npx hardhat clean

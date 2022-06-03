@@ -55,11 +55,11 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const totalSupply = 1000;
   const sessionLimitPerAccount = 1;
   const baseMintFee = hre.ethers.utils.parseUnits("0.01", "ether");
-  const mintFee = 10;
+  const mintFeeRate = 10;
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.FUJI_CONTRACT_ADDRESS, // Deployed contract address
+    address: process.env.RINKEBY_CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
@@ -67,7 +67,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
       totalSupply,
       sessionLimitPerAccount,
       baseMintFee,
-      mintFee,
+      mintFeeRate,
       feeAddress
     ],
   });

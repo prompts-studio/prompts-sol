@@ -293,6 +293,10 @@ contract Prompt is ERC721 {
 
     /// ============ Read-only functions ============
 
+    function contractURI() public pure returns (string memory) {
+        return "https://exquisitecorpse.prompts.studio/contract-metadata.json";
+    }
+
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "URI query for nonexistent token");
         return _tokenURIs[tokenId];

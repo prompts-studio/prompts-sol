@@ -8,6 +8,7 @@ const totalSupply = 2;
 const sessionLimitPerAccount = 1;
 const mintFeeRate = 5; // percent
 const baseMintFee = ethers.utils.parseUnits('0.01', 'ether');
+const contractURI = "https://exquisitecorpse.prompts.studio/contract-metadata.json";
 
 const tokenId = 0;
 const tokenId_1 = 1;
@@ -119,6 +120,10 @@ describe('Prompt contract', function () {
             expect(await prompt.mintFeeRate()).to.equal(mintFeeRate);
             // expect(await prompt.feeAddress()).to.equal(owner.address);
         });
+
+        it("has contractURI", async function () {
+            expect(await prompt.contractURI()).to.equal(contractURI);
+        })
     });
 
     describe("Prompt", function () {
