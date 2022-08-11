@@ -6,8 +6,9 @@ const symbol = 'pNFT';
 const memberLimit = 3;
 const totalSupply = 2;
 const sessionLimitPerAccount = 1;
-const mintFeeRate = 5; // percent
 const baseMintFee = ethers.utils.parseUnits('0.01', 'ether');
+const mintFeeRate = 10; // percent
+
 const contractURI = "https://exquisitecorpse.prompts.studio/contract-metadata.json";
 
 const tokenId = 0;
@@ -20,10 +21,10 @@ const duration = 86400; // 24 hrs
 const contributionURI_0 = "https://zero...";
 const contributionURI_1 = "https://one...";
 const contributionURI_2 = "https://two...";
-const contributionPrice_0 = ethers.utils.parseUnits('0.25', 'ether');
-const contributionPrice_1 = ethers.utils.parseUnits('0.25', 'ether');
-const contributionPrice_2 = ethers.utils.parseUnits('0.25', 'ether');
-const contributionPrice_1_new = ethers.utils.parseUnits('0.7', 'ether');
+const contributionPrice_0 = ethers.utils.parseUnits('0', 'ether');
+const contributionPrice_1 = ethers.utils.parseUnits('0', 'ether');
+const contributionPrice_2 = ethers.utils.parseUnits('0', 'ether');
+const contributionPrice_1_new = ethers.utils.parseUnits('0', 'ether');
 const contributionURIs = [contributionURI_0, contributionURI_1, contributionURI_2];
 
 let Prompt;
@@ -274,10 +275,12 @@ describe('Prompt contract', function () {
             await expect(prompt.tokenURI(tokenId)).to.be.reverted;
         });
 
-        it("can mint if reservedAddress and session completed", async function () {
+        it("can mint if the account is reservedAddress and session completed", async function () {
             const total = await calculatePayment(tokenId);
             const buyerReserved = await prompt.connect(addr5);
-
+            console.log("------")
+            console.log("buyer", addr5.address)
+            console.log("------")
             expect(await buyerReserved.mint(tokenId, {value: total}))
                 .to.emit(prompt, "Transfer")
                 .withArgs(ethers.constants.AddressZero, addr5.address, tokenId);
@@ -305,9 +308,9 @@ describe('Prompt contract', function () {
 
         it("anyone can mint if session is completed and does not have reservedAddress", async function () {
             const total = await calculatePayment(tokenId_1);
-            const someoneReserved = await prompt.connect(addr7);
+            const buyer = await prompt.connect(addr7);
 
-            expect(await someoneReserved.mint(tokenId_1, {value: total}))
+            expect(await buyer.mint(tokenId_1, {value: total}))
                 .to.emit(prompt, "Transfer")
                 .withArgs(ethers.constants.AddressZero, addr7.address, tokenId_1);
         });

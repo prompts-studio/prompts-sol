@@ -36,6 +36,7 @@ const main = async(): Promise<any> => {
                     mintFeeRate,
                     feeAddress
                 );
+    console.log("Deployment tx:", prompt.deployTransaction);
     await prompt.deployed(); // waiting for the contract to be deployed
     console.log("Deployed contract address:", prompt.address);
 }

@@ -59,7 +59,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.RINKEBY_CONTRACT_ADDRESS, // Deployed contract address
+    address: process.env.GOERLI_CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
@@ -140,11 +140,15 @@ export default {
       chainId: 43113,
       accounts: [`${PRIVATE_KEY}`]
     },
+    // mainnet: {
+    //   url: 'https://api.avax.network/ext/bc/C/rpc',
+    //   gasPrice: 225000000000,
+    //   chainId: 43114,
+    //   accounts: []
+    // },
     mainnet: {
-      url: 'https://api.avax.network/ext/bc/C/rpc',
-      gasPrice: 225000000000,
-      chainId: 43114,
-      accounts: []
+      url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      accounts: [`${PRIVATE_KEY}`]
     },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
@@ -152,6 +156,10 @@ export default {
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      accounts: [`${PRIVATE_KEY}`]
+    },
+    goerli: {
+      url: `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       accounts: [`${PRIVATE_KEY}`]
     }
   },
@@ -162,6 +170,7 @@ export default {
       mainnet: process.env.ETHERSCAN_KEY,
       ropsten: process.env.ETHERSCAN_KEY,
       rinkeby: process.env.ETHERSCAN_KEY,
+      goerli: process.env.ETHERSCAN_KEY,
       avalanche: process.env.SNOWTRACE_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_KEY,
     }

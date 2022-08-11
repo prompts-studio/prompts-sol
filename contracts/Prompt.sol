@@ -271,11 +271,13 @@ contract Prompt is ERC721 {
         }
         require(msg.value == totalPrice + mintFee, "Payment must be equal to listing price + mint fee");
 
-        for (uint256 i=0; i < length;) {
-            if (contributions[i].price > 0) {
-                contributions[i].creator.transfer(contributions[i].price);
+        if (totalPrice > 0) {
+            for (uint256 i=0; i < length;) {
+                if (contributions[i].price > 0) {
+                    contributions[i].creator.transfer(contributions[i].price);
+                }
+                unchecked { ++i; }
             }
-            unchecked { ++i; }
         }
 
         minted[_tokenId] = true;

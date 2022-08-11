@@ -19,21 +19,20 @@ npm install -g yarn
 
 ## Installation and Running
 
-1. Download
+### 1. Download
 ```sh
 git clone git@github.com:arikan/prompts-sol.git
 cd prompts-sol
 ```
 
-2. Build
+### 2. Build
 ```sh
 yarn
 ```
 
-3. Test
-
+### 3. Test
 ```sh
-yarn test # Compiles and runs on local Hardhat network
+yarn test ./test/prompt.test.js # Compiles and runs on local Hardhat network
 ```
 
 ## Deployment
@@ -83,22 +82,30 @@ yarn deploy --network mainnet
 
 ```sh
 # 1. Update .env with deployed contract address
-ROPSTEN_CONTRACT_ADDRESS=0x3d60c48bf526F4F74567C79d178BD58016f55F49
-RINKEBY_CONTRACT_ADDRESS=0x3c87cB72f329a5358888C7669BE347F3d4c80679
 FUJI_CONTRACT_ADDRESS=0x7237DF2d6Ad9599f5919421a0A70A02601e641F1
+ROPSTEN_CONTRACT_ADDRESS=0x3d60c48bf526F4F74567C79d178BD58016f55F49
+RINKEBY_CONTRACT_ADDRESS=0x407583e3EDEF1B9062Ef640cDA8A7B0147D45091
+GOERLI_CONTRACT_ADDRESS=0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2
+MAINNET_CONTRACT_ADDRESS=0x6F3249B8b68826311c4c7094a18135A6Ee6dbaA0
 
 # 2. Set the deployed [NETWORK]_CONTRACT_ADDRESS in hardhat.config.ts
 
 # 3. Verify contract
 
+# Verify on Snowtrace
+npx hardhat verify --network fuji --constructor-args arguments.ts 0x7237DF2d6Ad9599f5919421a0A70A02601e641F1 --show-stack-traces
+
 # Verify on Etherscan (Ropsten)
 npx hardhat verify --network ropsten --constructor-args arguments.ts 0x3d60c48bf526F4F74567C79d178BD58016f55F49 --show-stack-traces
 
 # Verif on Etherscan (Rinkeby)
-npx hardhat verify --network rinkeby --constructor-args arguments.ts 0x3c87cB72f329a5358888C7669BE347F3d4c80679 --show-stack-traces
+npx hardhat verify --network rinkeby --constructor-args arguments.ts 0x407583e3EDEF1B9062Ef640cDA8A7B0147D45091 --show-stack-traces
 
-# Verify on Snowtrace
-npx hardhat verify --network fuji --constructor-args arguments.ts 0x7237DF2d6Ad9599f5919421a0A70A02601e641F1 --show-stack-traces
+# Verif on Etherscan (Goerli)
+npx hardhat verify --network goerli --constructor-args arguments.ts 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2 --show-stack-traces
+
+# Verif on Etherscan (mainnet)
+npx hardhat verify --network mainnet --constructor-args arguments.ts 0x6F3249B8b68826311c4c7094a18135A6Ee6dbaA0 --show-stack-traces
 
 # Verification troubleshoot:
 
