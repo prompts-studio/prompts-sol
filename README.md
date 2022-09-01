@@ -32,7 +32,8 @@ yarn
 
 ### 3. Test
 ```sh
-yarn test ./test/prompt.test.js # Compiles and runs on local Hardhat network
+# Compile and run on local Hardhat network
+yarn test ./test/prompt.test.js
 ```
 
 ## Deployment
@@ -46,15 +47,15 @@ ALCHEMY_API_KEY=
 ETHERSCAN_KEY=
 SNOWTRACE_KEY=
 FEE_ADDRESS=
-ROPSTEN_PRIVATE_KEY=
-FUJI_PRIVATE_KEY=
-ROPSTEN_CONTRACT_ADDRESS=
-FUJI_CONTRACT_ADDRESS=
+PRIVATE_KEY=
+CONTRACT_ADDRESS=
 ```
 
 ### 2. Deploy
 
 Commands below run `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
+
+⚠️ Make sure you control the `FEE_ADDRESS` in the deployed network, update it in `.env` file.
 
 ```sh
 # Deploy to local Hardhat network
@@ -69,43 +70,68 @@ yarn deploy --network ropsten
 # Deploy to Rinkeby testnet
 yarn deploy --network rinkeby
 
-# Deploy to Avalanche testnet Fuji
+# Deploy to Rinkeby testnet
+yarn deploy --network goerli
+
+# Deploy to Fuji testnet (Avalanche)
 yarn deploy --network fuji
 
 # Deploy to Avalanche mainnet
-# feeAddress update in .env and deploy.ts: 0xa8CA4cF975a4DF6194c8B30F1501f30FCd557c9C
-yarn deploy --network mainnet
+yarn deploy --network avalanche
 
+# Deploy to Polygon testnet
+yarn deploy --network mumbai
+
+# Deploy to Polygon mainnet
+yarn deploy --network polygon
+
+# Deploy to Ethereum mainnet
+# uppdate these in .env
+# FEE_ADDRESS=0xa8CA4cF975a4DF6194c8B30F1501f30FCd557c9C
+# PRIVATE_KEY=<the deploying account>
+yarn deploy --network mainnet
 ```
 
-### 3. Verify contract on Explorer (Etherscan, Snowtrace)
+### 3. Verify contract on Explorer (Etherscan, Snowtrace, Polygonscan)
 
 ```sh
-# 1. Update .env with deployed contract address
-FUJI_CONTRACT_ADDRESS=0x7237DF2d6Ad9599f5919421a0A70A02601e641F1
-ROPSTEN_CONTRACT_ADDRESS=0x3d60c48bf526F4F74567C79d178BD58016f55F49
-RINKEBY_CONTRACT_ADDRESS=0x407583e3EDEF1B9062Ef640cDA8A7B0147D45091
-GOERLI_CONTRACT_ADDRESS=0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2
-MAINNET_CONTRACT_ADDRESS=0x6F3249B8b68826311c4c7094a18135A6Ee6dbaA0
+# 1. Update CONTRACT_ADDRESS in .env
 
-# 2. Set the deployed [NETWORK]_CONTRACT_ADDRESS in hardhat.config.ts
+# FUJI 0x3B72c90EA674706ab80E0D37F41fFac692ff55D9
+# ROPSTEN 0x3d60c48bf526F4F74567C79d178BD58016f55F49
+# RINKEBY 0x407583e3EDEF1B9062Ef640cDA8A7B0147D45091
+# RINKEBY2 0xA706906B42b537Cbd27284a7D30b3ffe4C9c5901
+# GOERLI 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2
+# AVALANCHE 0x0e8fF6e68eB11D4B36183C0Bb46a61D0D75FC010
+# MUMBAI 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2
+# POLYGON 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2
+# MAINNET 0xa13d5470611fedbD9591C25527E5096C25986770
 
-# 3. Verify contract
+# 2. Verify contract
 
-# Verify on Snowtrace
-npx hardhat verify --network fuji --constructor-args arguments.ts 0x7237DF2d6Ad9599f5919421a0A70A02601e641F1 --show-stack-traces
+# Verify on Snowtrace (Fuji)
+npx hardhat verify --network fuji --constructor-args arguments.ts 0x3B72c90EA674706ab80E0D37F41fFac692ff55D9 --show-stack-traces
 
 # Verify on Etherscan (Ropsten)
 npx hardhat verify --network ropsten --constructor-args arguments.ts 0x3d60c48bf526F4F74567C79d178BD58016f55F49 --show-stack-traces
 
-# Verif on Etherscan (Rinkeby)
-npx hardhat verify --network rinkeby --constructor-args arguments.ts 0x407583e3EDEF1B9062Ef640cDA8A7B0147D45091 --show-stack-traces
+# Verify on Etherscan (Rinkeby)
+npx hardhat verify --network rinkeby --constructor-args arguments.ts 0xA706906B42b537Cbd27284a7D30b3ffe4C9c5901 --show-stack-traces
 
-# Verif on Etherscan (Goerli)
+# Verify on Etherscan (Goerli)
 npx hardhat verify --network goerli --constructor-args arguments.ts 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2 --show-stack-traces
 
-# Verif on Etherscan (mainnet)
-npx hardhat verify --network mainnet --constructor-args arguments.ts 0x6F3249B8b68826311c4c7094a18135A6Ee6dbaA0 --show-stack-traces
+# Verify on Etherscan (Mainnet)
+npx hardhat verify --network mainnet --constructor-args arguments.ts 0xa13d5470611fedbD9591C25527E5096C25986770 --show-stack-traces
+
+# Verify on Snowtrace (Avalanche)
+npx hardhat verify --network avalanche --constructor-args arguments.ts 0x0e8fF6e68eB11D4B36183C0Bb46a61D0D75FC010 --show-stack-traces
+
+# Verify on Mumbai (Polygon)
+npx hardhat verify --network mumbai --constructor-args arguments.ts 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2 --show-stack-traces
+
+# Verify on Polygon
+npx hardhat verify --network polygon --constructor-args arguments.ts 0xcD4Bb04b2106d2E6075bdC19DbFA83C9DBc2F0a2 --show-stack-traces
 
 # Verification troubleshoot:
 

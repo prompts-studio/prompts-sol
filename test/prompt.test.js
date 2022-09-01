@@ -21,10 +21,10 @@ const duration = 86400; // 24 hrs
 const contributionURI_0 = "https://zero...";
 const contributionURI_1 = "https://one...";
 const contributionURI_2 = "https://two...";
-const contributionPrice_0 = ethers.utils.parseUnits('0', 'ether');
-const contributionPrice_1 = ethers.utils.parseUnits('0', 'ether');
-const contributionPrice_2 = ethers.utils.parseUnits('0', 'ether');
-const contributionPrice_1_new = ethers.utils.parseUnits('0', 'ether');
+const contributionPrice_0 = ethers.utils.parseUnits('0.25', 'ether');
+const contributionPrice_1 = ethers.utils.parseUnits('0.25', 'ether');
+const contributionPrice_2 = ethers.utils.parseUnits('0.25', 'ether');
+const contributionPrice_1_new = ethers.utils.parseUnits('0.30', 'ether');
 const contributionURIs = [contributionURI_0, contributionURI_1, contributionURI_2];
 
 let Prompt;
@@ -64,7 +64,7 @@ async function calculatePayment(tokenId) {
     let totalPrice = ethers.BigNumber.from(0);
     let mintFee = ethers.BigNumber.from(await prompt.baseMintFee());
     const mintFeeRate = await prompt.mintFeeRate(); // ethers.BigNumber.from(await prompt.mintFeeRate());
-    console.log('mintFeeRate', ethers.utils.formatEther(mintFeeRate));
+    // console.log('mintFeeRate', ethers.utils.formatEther(mintFeeRate));
 
     contributions.forEach(c => {
         totalPrice = totalPrice.add(ethers.BigNumber.from(c.price));
@@ -127,7 +127,7 @@ describe('Prompt contract', function () {
         })
     });
 
-    describe("Prompt", function () {
+    describe("Session create, contribute, mint", function () {
 
         it("deployer address in the allowlist", async function () {
             expect(await prompt.allowlist(owner.address)).to.equal(true);
@@ -278,9 +278,9 @@ describe('Prompt contract', function () {
         it("can mint if the account is reservedAddress and session completed", async function () {
             const total = await calculatePayment(tokenId);
             const buyerReserved = await prompt.connect(addr5);
-            console.log("------")
-            console.log("buyer", addr5.address)
-            console.log("------")
+            // console.log("------")
+            // console.log("buyer", addr5.address)
+            // console.log("------")
             expect(await buyerReserved.mint(tokenId, {value: total}))
                 .to.emit(prompt, "Transfer")
                 .withArgs(ethers.constants.AddressZero, addr5.address, tokenId);
@@ -315,26 +315,6 @@ describe('Prompt contract', function () {
                 .withArgs(ethers.constants.AddressZero, addr7.address, tokenId_1);
         });
 
-        it("buyer and member balances check", async function () {
-            // minter
-            const addr5Balance = await addr5.getBalance();
-            console.log('addr5Balance', ethers.utils.formatEther(addr5Balance));
-
-            // contributors
-            const ownerBalance = await owner.getBalance();
-            console.log(owner.address, ethers.utils.formatEther(ownerBalance));
-
-            const addr1Balance = await addr1.getBalance();
-            console.log(addr1.address, ethers.utils.formatEther(addr1Balance));
-
-            const addr2Balance = await addr2.getBalance();
-            console.log(addr2.address, ethers.utils.formatEther(addr2Balance));
-
-            // feeAddress
-            const addr6Balance = await addr6.getBalance();
-            console.log(addr6.address, ethers.utils.formatEther(addr6Balance));
-        });
-
         it("buyer is the owner for reserved session", async function () {
             let nftOwner = await prompt.ownerOf(tokenId);
             expect(nftOwner).to.equal(addr5.address);
@@ -360,13 +340,110 @@ describe('Prompt contract', function () {
 
         it("get a session that is minted", async function () {
             const mySession = await prompt.getSession(tokenId);
-            console.log(mySession);
+            // console.log(mySession);
 
             expect(mySession[0]).to.eql(addr5.address); // addr5 the new owner
             expect(mySession[1]).to.gt(await blockTime()); //endsAt
             expect(mySession[2]).to.eql(tokenURI_2); // tokenURI
             expect(mySession[3]).to.eql(members); // deep equality check for arrays
             // mySession[4] // contributions array
+        });
+    });
+
+    describe("Withdraw", function () {
+
+        it("first contributor's contract balance equals to her contributions", async function () {
+            const contrContractBalance = await prompt.balance(members[0]);
+            // contributed two times from this price
+            const totalContribution = contributionPrice_0.mul(2);
+            expect(contrContractBalance).to.eql(totalContribution);
+        });
+
+        it("first contributor's releasable amount equals to her contribution", async function () {
+            const payment = await prompt.releasable(members[0]);
+            const totalContribution = contributionPrice_0.mul(2);
+            expect(payment).to.eql(totalContribution);
+        });
+
+        it("first contributor can withdraw releasable amount", async function () {
+            const contributor = await prompt.connect(owner);
+            const totalContribution = contributionPrice_0.mul(2);
+
+            expect(await contributor.withdraw(members[0]))
+                .to.emit(prompt, "PaymentReleased")
+                .withArgs(members[0], totalContribution);
+        });
+
+        it("first contributor cannot withdraw if payment is not due", async function () {
+            const contributor = await prompt.connect(owner);
+            const totalContribution = contributionPrice_0.mul(2);
+
+            await expect(contributor.withdraw(members[0]))
+                .to.be.reverted;
+        });
+
+        it("second contributor's contract balance equals to her contributions", async function () {
+            const contrContractBalance = await prompt.balance(members[1]);
+            // contributed two times from this price
+            const totalContribution = contributionPrice_1.add(contributionPrice_1_new);
+            expect(contrContractBalance).to.eql(totalContribution);
+        });
+
+        it("second contributor's releasable amount equals to her contributions", async function () {
+            const payment = await prompt.releasable(members[1]);
+            const totalContribution = contributionPrice_1.add(contributionPrice_1_new);
+            expect(payment).to.eql(totalContribution);
+        });
+
+        it("second contributor can withdraw releasable amount", async function () {
+            const contributor = await prompt.connect(addr1);
+            const totalContribution = contributionPrice_1.add(contributionPrice_1_new);
+
+            expect(await contributor.withdraw(members[1]))
+                .to.emit(prompt, "PaymentReleased")
+                .withArgs(members[1], totalContribution);
+        });
+
+        it("third contributor's contract balance equals to her contributions", async function () {
+            const contrContractBalance = await prompt.balance(members[2]);
+            // contributed two times from this price
+            const totalContribution = contributionPrice_2.mul(2);
+            expect(contrContractBalance).to.eql(totalContribution);
+        });
+
+        it("third contributor's releasable amount equals to her contributions", async function () {
+            const payment = await prompt.releasable(members[2]);
+            const totalContribution = contributionPrice_2.mul(2);
+            expect(payment).to.eql(totalContribution);
+        });
+
+        it("third contributor can withdraw releasable amount", async function () {
+            const contributor = await prompt.connect(owner);
+            const totalContribution = contributionPrice_2.mul(2);
+
+            expect(await contributor.withdraw(members[2]))
+                .to.emit(prompt, "PaymentReleased")
+                .withArgs(members[2], totalContribution);
+        });
+
+        it("minter balance and mint fee address balance check", async function () {
+            // minter
+            const addr5Balance = await addr5.getBalance();
+            console.log('addr5Balance', ethers.utils.formatEther(addr5Balance));
+
+            // contributors
+            // const ownerBalance = await owner.getBalance();
+            // console.log(owner.address, ethers.utils.formatEther(ownerBalance));
+
+            // const addr1Balance = await addr1.getBalance();
+            // console.log(addr1.address, ethers.utils.formatEther(addr1Balance));
+
+            // const addr2Balance = await addr2.getBalance();
+            // console.log(addr2.address, ethers.utils.formatEther(addr2Balance));
+
+            // feeAddress
+            const addr6Balance = await addr6.getBalance();
+            console.log(addr6.address, ethers.utils.formatEther(addr6Balance));
         });
     });
 });

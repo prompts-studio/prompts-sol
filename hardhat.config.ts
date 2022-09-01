@@ -59,7 +59,7 @@ task("verify", "Verifies the contract on Etherscan", async (args, hre): Promise<
   const feeAddress = process.env.FEE_ADDRESS;
 
   await hre.run("verify:verify", {
-    address: process.env.GOERLI_CONTRACT_ADDRESS, // Deployed contract address
+    address: process.env.CONTRACT_ADDRESS, // Deployed contract address
     constructorArguments: [
       name,
       symbol,
@@ -140,12 +140,22 @@ export default {
       chainId: 43113,
       accounts: [`${PRIVATE_KEY}`]
     },
-    // mainnet: {
-    //   url: 'https://api.avax.network/ext/bc/C/rpc',
-    //   gasPrice: 225000000000,
-    //   chainId: 43114,
-    //   accounts: []
-    // },
+    avalanche: {
+      url: 'https://api.avax.network/ext/bc/C/rpc',
+      gasPrice: 225000000000,
+      chainId: 43114,
+      accounts: [`${PRIVATE_KEY}`]
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      chainId: 80001,
+      accounts: [`${PRIVATE_KEY}`]
+    },
+    polygon: {
+      url: "https://polygon-rpc.com/",
+      chainId: 137,
+      accounts: [`${PRIVATE_KEY}`]
+    },
     mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [`${PRIVATE_KEY}`]
@@ -173,6 +183,8 @@ export default {
       goerli: process.env.ETHERSCAN_KEY,
       avalanche: process.env.SNOWTRACE_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_KEY,
+      polygonMumbai: process.env.POLYGONSCAN_KEY,
+      polygon: process.env.POLYGONSCAN_KEY,
     }
   },
   gasReporter: {

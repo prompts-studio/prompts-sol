@@ -4,6 +4,7 @@ pragma solidity 0.8.12;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title Prompt
 /// @author Burak Arıkan & Sam Hart
@@ -17,6 +18,7 @@ contract Prompt is ERC721 {
     event MemberAdded(uint256 tokenId, address account);
     event Contributed(uint256 tokenId, string contributionURI, address creator, uint256 price);
     event PriceSet(uint256 tokenId, address contributor, uint256 price);
+    event PaymentReleased(address to, uint256 amount);
 
     /// ============ Structs ============
 
@@ -43,6 +45,9 @@ contract Prompt is ERC721 {
     mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
     mapping (address => bool) public allowlist; // allowlist[address]
     mapping(uint256 => string) private _tokenURIs; // _tokenURIs[tokenId]
+
+    mapping(address => uint256) private _balances; // _balances[account]
+    mapping(address => uint256) private _released; // _released[account]
 
     /// ============ Immutable storage ============
 
@@ -274,7 +279,8 @@ contract Prompt is ERC721 {
         if (totalPrice > 0) {
             for (uint256 i=0; i < length;) {
                 if (contributions[i].price > 0) {
-                    contributions[i].creator.transfer(contributions[i].price);
+                    _balances[contributions[i].creator] = _balances[contributions[i].creator] + contributions[i].price;
+                    // contributions[i].creator.transfer(contributions[i].price);
                 }
                 unchecked { ++i; }
             }
@@ -282,9 +288,28 @@ contract Prompt is ERC721 {
 
         minted[_tokenId] = true;
 
-        feeAddress.transfer(mintFee);
+        Address.sendValue(feeAddress, mintFee);
+        // feeAddress.transfer(mintFee);
 
         _safeMint(msg.sender, _tokenId);
+    }
+
+     /**
+     * @notice Triggers a transfer to `account` of the amount of Ether they are owed,
+     * according to their balance and their previous withdrawals.
+     */
+    function withdraw(address payable account) public virtual {
+        require(balance(account) > 0, "Account has no balance");
+
+        uint256 payment = releasable(account);
+
+        require(payment != 0, "Account is not due payment");
+
+        _released[account] += payment;
+        // _balances[account] -= payment;
+
+        Address.sendValue(account, payment);
+        emit PaymentReleased(account, payment);
     }
 
     /// ============ Internal functions ============
@@ -297,6 +322,27 @@ contract Prompt is ERC721 {
 
     function contractURI() public pure returns (string memory) {
         return "https://exquisitecorpse.prompts.studio/contract-metadata.json";
+    }
+
+    /**
+     * @dev Get the amount of Eth held by an account.
+     */
+    function balance(address account) public view returns (uint256) {
+        return _balances[account];
+    }
+
+    /**
+     * @notice Get the amount of payee's releasable Eth.
+     */
+    function releasable(address account) public view returns (uint256) {
+        return _balances[account] - _released[account];
+    }
+
+    /**
+     * @notice Get the amount of Eth already released to a payee.
+     */
+    function released(address account) public view returns (uint256) {
+        return _released[account];
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
