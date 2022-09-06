@@ -8,7 +8,7 @@ Prompt contracts include several deployment parameters, duration, max supply, cr
 
 1. Install the long-term support version of [nodejs](https://nodejs.org/en) (`16.10.0` at the time of writing).
 
-2. Install [yarn](https://yarnpkg.com):
+2. Install [yarn](https://yarnpkg.com)
 ```sh
 npm install -g yarn
 ```
@@ -51,7 +51,7 @@ CONTRACT_ADDRESS=
 
 Commands below run `scripts/deploy.ts` for picking the contracts to be deployed, and `hardhat.config.js` for picking the network to deploy.
 
-⚠️ Make sure you control the `FEE_ADDRESS` and `PRIVATE_KEY` in the deployed network, update it in the `.env` file.
+⚠️ Make sure you control the `FEE_ADDRESS` and `PRIVATE_KEY` for the deployed network in `.env` file.
 
 ```sh
 # Deploy to local Hardhat network
@@ -86,11 +86,13 @@ npx hardhat verify --network rinkeby --constructor-args arguments.ts 0xA706906B4
 
 # Verify on Etherscan (Mainnet)
 npx hardhat verify --network mainnet --constructor-args arguments.ts 0xa13d5470611fedbD9591C25527E5096C25986770 --show-stack-traces
+```
 
-# Verification troubleshoot:
+#### Verification troubleshoot
 
-# If the contract was recently deployed and this fact hasn't propagated to the backend yet. Try waiting for a minute before verifying your contract.
+If the contract was recently deployed it may not propagated to the backend yet. Try waiting for a minute before verifying your contract.
 
+```sh
 # Clear the cache and delete the artifacts
 npx hardhat clean
 
