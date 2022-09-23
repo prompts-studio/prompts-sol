@@ -119,7 +119,7 @@ describe('Prompt contract', function () {
             expect(await prompt.sessionLimitPerAccount()).to.equal(sessionLimitPerAccount);
             expect(await prompt.baseMintFee()).to.equal(baseMintFee);
             expect(await prompt.mintFeeRate()).to.equal(mintFeeRate);
-            // expect(await prompt.feeAddress()).to.equal(owner.address);
+            // expect(await prompt.feeAddress()).to.equal(owner.address); // not public, so not testable
         });
 
         it("has contractURI", async function () {

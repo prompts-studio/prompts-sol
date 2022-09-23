@@ -30,13 +30,17 @@ yarn
 ```sh
 # Compile and run on local Hardhat network
 yarn test ./test/prompt.test.js
+
+# Run static Solidity analyzer https://github.com/crytic/slither
+slither .
 ```
+
 
 ## Deployment
 
 ### 1. Configure
 
-Make sure you have a `.env` file in the project root directory:
+Create an `.env` file in the root directory and add these variables:
 
 ```sh
 ALCHEMY_API_KEY=
