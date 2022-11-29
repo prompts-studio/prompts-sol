@@ -64,8 +64,8 @@ yarn deploy
 # Deploy to Avalanche Fuji testnet
 yarn deploy --network fuji
 
-# Deploy to Rinkeby testnet
-yarn deploy --network rinkeby
+# Deploy to Goerli testnet
+yarn deploy --network goerli
 
 # Deploy to Ethereum mainnet
 yarn deploy --network mainnet
@@ -76,20 +76,22 @@ yarn deploy --network mainnet
 ```sh
 # 1. Update CONTRACT_ADDRESS in .env
 
-# FUJI 0x3B72c90EA674706ab80E0D37F41fFac692ff55D9
-# RINKEBY 0xA706906B42b537Cbd27284a7D30b3ffe4C9c5901
-# MAINNET 0xa13d5470611fedbD9591C25527E5096C25986770
+# GOERLI 0xA2dDe6Aa49838a3ef239e46a4a52d7e0E139556B
+# MAINNET 0xF49D1584E399e2D753a1Edef633EFF05c8CD5D15
 
-# 2. Verify contract
+# 2. Make sure arguements.ts and deploy parameters match
+
+# 3. Verify contract
 
 # Verify on Snowtrace (Fuji)
 npx hardhat verify --network fuji --constructor-args arguments.ts 0x3B72c90EA674706ab80E0D37F41fFac692ff55D9 --show-stack-traces
 
-# Verify on Etherscan (Rinkeby)
-npx hardhat verify --network rinkeby --constructor-args arguments.ts 0xA706906B42b537Cbd27284a7D30b3ffe4C9c5901 --show-stack-traces
+# Verify on Etherscan (Goerli)
+npx hardhat verify --network goerli --constructor-args arguments.ts 0xA2dDe6Aa49838a3ef239e46a4a52d7e0E139556B --show-stack-traces
 
 # Verify on Etherscan (Mainnet)
-npx hardhat verify --network mainnet --constructor-args arguments.ts 0xa13d5470611fedbD9591C25527E5096C25986770 --show-stack-traces
+npx hardhat verify --network mainnet --constructor-args arguments.ts 0xF49D1584E399e2D753a1Edef633EFF05c8CD5D15 --show-stack-traces
+
 ```
 
 #### Verification troubleshoot
