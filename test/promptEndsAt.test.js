@@ -59,7 +59,7 @@ async function moveForward(duration) {
 }
 async function calculatePayment(tokenId) {
     const mySession = await prompt.getSession(tokenId);
-    const contributions = mySession[3];
+    const contributions = mySession[4];
 
     let totalPrice = ethers.BigNumber.from(0);
     let mintFee = ethers.BigNumber.from(await prompt.baseMintFee());
@@ -133,37 +133,41 @@ describe('Prompt contract', function () {
             expect(await prompt.allowlist(owner.address)).to.equal(true);
         });
 
-        it("creates session with reservedAddress, members, first contribution, and price", async function () {
+        it("creates session with reservedAddress, endsAt, members, first contribution, and price", async function () {
             const blocktime = await blockTime();
+            const endsAt = blocktime + duration;
 
-            expect(await prompt.createSession(reservedAddress, members, contributionURI_0, contributionPrice_0))
+            expect(await prompt.createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.emit(prompt, "SessionCreated")
                 .withArgs(tokenId, owner.address, reservedAddress);
-                // .withArgs(tokenId, members, contributionURI_0, contributionPrice_0, owner.address, reservedAddress);
+                // .withArgs(tokenId, endsAt, members, contributionURI_0, contributionPrice_0, owner.address, reservedAddress);
         });
 
-        it("cannot create a session if the account reached their sessionLimitPerAccount", async function () {
+        it("cannot create a session if the account reached the limit", async function () {
             const blocktime = await blockTime();
+            const endsAt = blocktime + duration;
 
-            await expect(prompt.createSession(reservedAddress, members, contributionURI_0, contributionPrice_0))
+            await expect(prompt.createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.be.reverted;
         });
 
         it("cannot create session if in the allowlist", async function () {
             const blocktime = await blockTime();
+            const endsAt = blocktime + duration;
 
-            await expect(prompt.connect(addr6).createSession(reservedAddress, members, contributionURI_0, contributionPrice_0))
+            await expect(prompt.connect(addr6).createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.be.reverted;
         });
 
         it("can create session (without reserverAddress) if in the allowlist", async function () {
             const blocktime = await blockTime();
+            const endsAt = blocktime + duration;
             const emptyReservedAddress = ethers.constants.AddressZero; // "0x0000000000000000000000000000000000000000";
 
-            expect(await prompt.connect(addr1).createSession(emptyReservedAddress, members, contributionURI_1, contributionPrice_1))
+            expect(await prompt.connect(addr1).createSession(emptyReservedAddress, endsAt, members, contributionURI_1, contributionPrice_1))
                 .to.emit(prompt, "SessionCreated")
                 .withArgs(tokenId_1, addr1.address, emptyReservedAddress);
-                // .withArgs(tokenId_1, members, contributionURI_1, contributionPrice_1, addr1.address, emptyReservedAddress);
+                // .withArgs(tokenId_1, endsAt, members, contributionURI_1, contributionPrice_1, addr1.address, emptyReservedAddress);
         });
 
         it("owner contributed token 0", async function () {
@@ -174,8 +178,9 @@ describe('Prompt contract', function () {
 
         it("cannot create session if reached supply limit", async function () {
             const blocktime = await blockTime();
+            const endsAt = blocktime + duration;
 
-            await expect(prompt.connect(addr2).createSession(reservedAddress, members, contributionURI_0, contributionPrice_0))
+            await expect(prompt.connect(addr2).createSession(reservedAddress, endsAt, members, contributionURI_0, contributionPrice_0))
                 .to.be.revertedWith('reached token supply limit');
         });
 
@@ -244,9 +249,10 @@ describe('Prompt contract', function () {
             const mySession = await prompt.getSession(tokenId);
 
             expect(mySession[0]).to.eql("0x0000000000000000000000000000000000000000"); // owner, not yet minted
-            expect(mySession[1]).to.eql(''); // tokenURI, not yet minted
-            expect(mySession[2]).to.eql(members); // deep equality check for arrays
-            // mySession[3] // contributions array
+            expect(mySession[1]).to.gt(await blockTime()); //endsAt
+            expect(mySession[2]).to.eql(''); // tokenURI, not yet minted
+            expect(mySession[3]).to.eql(members); // deep equality check for arrays
+            // mySession[4] // contributions array
         });
 
         it("is session completed?", async function () {
@@ -337,9 +343,10 @@ describe('Prompt contract', function () {
             // console.log(mySession);
 
             expect(mySession[0]).to.eql(addr5.address); // addr5 the new owner
-            expect(mySession[1]).to.eql(tokenURI_2); // tokenURI
-            expect(mySession[2]).to.eql(members); // deep equality check for arrays
-            // mySession[3] // contributions array
+            expect(mySession[1]).to.gt(await blockTime()); //endsAt
+            expect(mySession[2]).to.eql(tokenURI_2); // tokenURI
+            expect(mySession[3]).to.eql(members); // deep equality check for arrays
+            // mySession[4] // contributions array
         });
     });
 

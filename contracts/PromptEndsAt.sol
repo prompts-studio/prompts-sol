@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 /// @author Burak Arıkan & Sam Hart
 /// @notice Extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
 
-contract Prompt is ERC721 {
+contract PromptEndsAt is ERC721 {
 
     /// ============ Events ============
 
@@ -33,20 +33,21 @@ contract Prompt is ERC721 {
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-    mapping (uint256 => uint8) public memberCount;                             // memberCount[tokenId]
-    mapping (uint256 => uint8) public contributionCount;                       // contributionCount[tokenId]
-    mapping (uint256 => bool) public minted;                                   // minted[tokenId]
-    mapping (uint256 => address) public reservedFor;                           // reservedFor[tokenId]
-    mapping (uint256 => address[]) public members;                             // members[tokenId]
-    mapping (address => uint256[]) public createdSessions;                     // createdSessions[address]
-    mapping (uint256 => mapping (address => bool)) public membership;          // membership[tokenId][address]
+    mapping (uint256 => uint8) public memberCount; // memberCount[tokenId]
+    mapping (uint256 => uint8) public contributionCount; // contributionCount[tokenId]
+    mapping (uint256 => bool) public minted; // minted[tokenId]
+    mapping (uint256 => uint256) public endsAt; // endsAt[tokenId]
+    mapping (uint256 => address) public reservedFor; // reservedFor[tokenId]
+    mapping (uint256 => address[]) public members; // members[tokenId]
+    mapping (address => uint256[]) public createdSessions; // createdSessions[address]
+    mapping (uint256 => mapping (address => bool)) public membership; // membership[tokenId][address]
     mapping (uint256 => mapping (address => Contribution)) public contributed; // contributed[tokenId][address]
-    mapping (address => uint256[]) public contributedTokens;                   // contributedTokens[address]
-    mapping (address => bool) public allowlist;                                // allowlist[address]
-    mapping(uint256 => string) private _tokenURIs;                             // _tokenURIs[tokenId]
+    mapping (address => uint256[]) public contributedTokens; // contributedTokens[address]
+    mapping (address => bool) public allowlist; // allowlist[address]
+    mapping(uint256 => string) private _tokenURIs; // _tokenURIs[tokenId]
 
-    mapping(address => uint256) private _balances;                             // _balances[account]
-    mapping(address => uint256) private _released;                             // _released[account]
+    mapping(address => uint256) private _balances; // _balances[account]
+    mapping(address => uint256) private _released; // _released[account]
 
     /// ============ Immutable storage ============
 
@@ -114,6 +115,16 @@ contract Prompt is ERC721 {
             'account reached session limit');
         _;
     }
+    modifier isNotEnded(uint256 _tokenId) {
+        require(endsAt[_tokenId] > block.timestamp,
+                'session has ended');
+        _;
+    }
+    modifier isEnded(uint256 _tokenId) {
+        require(endsAt[_tokenId] < block.timestamp,
+                'session has not ended yet');
+        _;
+    }
     modifier isNotEmpty(string memory _content) {
         require(bytes(_content).length != 0,
             'URI cannot be empty');
@@ -135,7 +146,7 @@ contract Prompt is ERC721 {
         _;
     }
     modifier isFinalized(uint _tokenId) {
-        require(contributionCount[_tokenId] == memberLimit,
+        require(contributionCount[_tokenId] == memberLimit || (endsAt[_tokenId] != 0 && endsAt[_tokenId] < block.timestamp),
             'not all members contributed or session has not ended yet');
         _;
     }
@@ -147,13 +158,15 @@ contract Prompt is ERC721 {
 
     /// ============ Functions ============
 
-    /// @notice Create a session with tokenID. A session becomes mintable when all members contributed.
+    /// @notice Create a session with tokenID. A session becomes mintable when it is finalized (all members contributed or endsAt is exceeded)
     /// @param _reservedAddress If set (optional), only this address can mint. Can be used for commissioned work.
+    /// @param _endsAt All contributions must be submited before this time
     /// @param _members List of addresses who can contribute
     /// @param _contributionURI The first contribution metadata to the session
     /// @param _contributionPrice The first contribution price
     function createSession(
         address _reservedAddress,
+        uint256 _endsAt,
         address[] calldata _members,
         string calldata _contributionURI,
         uint256 _contributionPrice
@@ -165,7 +178,7 @@ contract Prompt is ERC721 {
     {
         require(_tokenIds.current() < totalSupply, "reached token supply limit");
         require(_members.length <= memberLimit, "reached member limit");
-        // require(_endsAt > block.timestamp, "quit living in the past");
+        require(_endsAt > block.timestamp, "quit living in the past");
 
         uint256 newTokenId = _tokenIds.current();
 
@@ -179,6 +192,8 @@ contract Prompt is ERC721 {
             allowlist[_members[i]] = true;
             unchecked { ++i; }
         }
+
+        endsAt[newTokenId] = _endsAt;
 
         if (_reservedAddress != address(0)) {
             reservedFor[newTokenId] = _reservedAddress;
@@ -207,10 +222,10 @@ contract Prompt is ERC721 {
         uint256 _contributionPrice
     )
         external
+        isNotEnded(_tokenId)
         onlyMemberOf(_tokenId)
         memberNotContributed(_tokenId)
         isNotEmpty(_contributionURI)
-        isNotMinted(_tokenId)
     {
         contributed[_tokenId][msg.sender] = Contribution(block.timestamp, _contributionPrice, payable(msg.sender), _contributionURI);
         contributedTokens[msg.sender].push(_tokenId);
@@ -382,10 +397,11 @@ contract Prompt is ERC721 {
     }
 
     /// @notice Get session data
-    /// @return Returns (owner: address, tokenURI: string, members: address[], contributions: Contribution[], reserved: address)
+    /// @return Returns (owner: address, endsAt: blocktime, tokenURI: string, members: address[], contributions: Contribution[], reserved: address)
     function getSession(uint256 _tokenId) external view virtual
         returns (
             address,
+            uint256,
             string memory,
             address[] memory,
             Contribution[] memory,
@@ -400,6 +416,7 @@ contract Prompt is ERC721 {
         }
         return(
             sessionOwner,
+            endsAt[_tokenId],
             tokenuri,
             members[_tokenId],
             getContributions(_tokenId),
