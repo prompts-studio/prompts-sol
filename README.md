@@ -77,7 +77,7 @@ yarn deploy --network mainnet
 # 1. Update CONTRACT_ADDRESS in .env
 
 # GOERLI 0xA2dDe6Aa49838a3ef239e46a4a52d7e0E139556B
-# MAINNET 0xF49D1584E399e2D753a1Edef633EFF05c8CD5D15
+# MAINNET 0x18B99AC678c01C1511F818F58Af636920D7ffdD6
 
 # 2. Make sure arguements.ts and deploy parameters match
 
@@ -90,7 +90,7 @@ npx hardhat verify --network fuji --constructor-args arguments.ts 0x3B72c90EA674
 npx hardhat verify --network goerli --constructor-args arguments.ts 0xA2dDe6Aa49838a3ef239e46a4a52d7e0E139556B --show-stack-traces
 
 # Verify on Etherscan (Mainnet)
-npx hardhat verify --network mainnet --constructor-args arguments.ts 0xF49D1584E399e2D753a1Edef633EFF05c8CD5D15 --show-stack-traces
+npx hardhat verify --network mainnet --constructor-args arguments.ts 0x18B99AC678c01C1511F818F58Af636920D7ffdD6 --show-stack-traces
 
 ```
 
