@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title Prompt
 /// @author Burak Arıkan & Sam Hart
-/// @notice Extends the ERC721 non-fungible token standard to enable time-bound verifiable collaborative authorship
+/// @notice Extends the ERC721 non-fungible token standard to enable verifiable collaborative authorship
 
 contract Prompt is ERC721 {
 
